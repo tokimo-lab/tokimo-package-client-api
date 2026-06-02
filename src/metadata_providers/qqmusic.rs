@@ -22,7 +22,11 @@ impl QQMusicClient {
     }
 
     /// Search albums by keyword.
-    async fn search(&self, keyword: &str, limit: u32) -> Result<Vec<AlbumSearchResult>, ClientError> {
+    async fn search(
+        &self,
+        keyword: &str,
+        limit: u32,
+    ) -> Result<Vec<AlbumSearchResult>, ClientError> {
         let url = format!("{QQMUSIC_API_BASE}/client_search_cp");
         let resp = self
             .http
@@ -49,7 +53,10 @@ impl QQMusicClient {
         }
 
         let data: serde_json::Value = resp.json().await?;
-        let albums = data["data"]["album"]["list"].as_array().cloned().unwrap_or_default();
+        let albums = data["data"]["album"]["list"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default();
 
         Ok(albums
             .into_iter()
@@ -69,7 +76,9 @@ impl QQMusicClient {
                     external_id: a["album_mid"].as_str().unwrap_or("").to_string(),
                     title: a["album_name"].as_str().unwrap_or("").to_string(),
                     artist,
-                    year: a["public_time"].as_str().and_then(|s| s.parse::<i32>().ok()),
+                    year: a["public_time"]
+                        .as_str()
+                        .and_then(|s| s.parse::<i32>().ok()),
                     track_count: a["total"].as_i64().map(|n| n as i32),
                     cover_url,
                     score: None,
@@ -84,7 +93,11 @@ impl QQMusicClient {
         let resp = self
             .http
             .get(&url)
-            .query(&[("albummid", album_mid), ("format", "json"), ("new_json", "1")])
+            .query(&[
+                ("albummid", album_mid),
+                ("format", "json"),
+                ("new_json", "1"),
+            ])
             .send()
             .await?;
 
@@ -171,7 +184,11 @@ impl super::MusicMetadataProvider for QQMusicClient {
         Ok(results)
     }
 
-    async fn search_albums_by_keyword(&self, keyword: &str, limit: u32) -> Result<Vec<AlbumSearchResult>, ClientError> {
+    async fn search_albums_by_keyword(
+        &self,
+        keyword: &str,
+        limit: u32,
+    ) -> Result<Vec<AlbumSearchResult>, ClientError> {
         self.search(keyword, limit).await
     }
 

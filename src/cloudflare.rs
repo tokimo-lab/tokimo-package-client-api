@@ -24,7 +24,11 @@ impl CloudflareBypassClient {
         }
     }
 
-    pub async fn fetch_html(&self, url: &str, cookie: Option<&str>) -> Result<FetchHtmlResult, ClientError> {
+    pub async fn fetch_html(
+        &self,
+        url: &str,
+        cookie: Option<&str>,
+    ) -> Result<FetchHtmlResult, ClientError> {
         let res = self.inner.fetch_html(url, cookie).await?;
         Ok(FetchHtmlResult {
             status: res.status,

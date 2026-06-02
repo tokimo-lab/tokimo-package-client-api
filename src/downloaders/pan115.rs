@@ -119,7 +119,10 @@ impl DownloadClient for Pan115Client {
     async fn test_connection(&self) -> Result<ClientStatus, ClientError> {
         match self.get_tasks_page(1).await {
             Ok(v) => {
-                let ok = v.get("state").and_then(serde_json::Value::as_bool).unwrap_or(false);
+                let ok = v
+                    .get("state")
+                    .and_then(serde_json::Value::as_bool)
+                    .unwrap_or(false);
                 if ok {
                     Ok(ClientStatus {
                         connected: true,
@@ -172,7 +175,9 @@ impl DownloadClient for Pan115Client {
 
     async fn get_torrent(&self, hash: &str) -> Result<Option<TorrentInfo>, ClientError> {
         let torrents = self.get_torrents(None, None).await?;
-        Ok(torrents.into_iter().find(|t| t.hash.eq_ignore_ascii_case(hash)))
+        Ok(torrents
+            .into_iter()
+            .find(|t| t.hash.eq_ignore_ascii_case(hash)))
     }
 
     async fn add_torrent(&self, options: AddTorrentOptions) -> Result<(), ClientError> {
@@ -180,12 +185,16 @@ impl DownloadClient for Pan115Client {
             if urls.is_empty() {
                 return Ok(());
             }
-            let url = format!("{}/lixian/?ct=lixian&ac=add_task_urls", self.config.base_url());
+            let url = format!(
+                "{}/lixian/?ct=lixian&ac=add_task_urls",
+                self.config.base_url()
+            );
             let mut form: Vec<(String, String)> = Vec::new();
             for (i, task_url) in urls.iter().enumerate() {
                 form.push((format!("url[{i}]"), task_url.clone()));
             }
-            let form_refs: Vec<(&str, &str)> = form.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
+            let form_refs: Vec<(&str, &str)> =
+                form.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
             self.client
                 .post(&url)
                 .header("Cookie", &self.config.cookies)
@@ -204,7 +213,11 @@ impl DownloadClient for Pan115Client {
         Ok(())
     }
 
-    async fn delete_torrents(&self, hashes: &[&str], delete_files: bool) -> Result<(), ClientError> {
+    async fn delete_torrents(
+        &self,
+        hashes: &[&str],
+        delete_files: bool,
+    ) -> Result<(), ClientError> {
         if hashes.is_empty() {
             return Ok(());
         }
@@ -215,9 +228,14 @@ impl DownloadClient for Pan115Client {
         }
         form.push((
             "delete_file".to_string(),
-            if delete_files { "1".to_string() } else { "0".to_string() },
+            if delete_files {
+                "1".to_string()
+            } else {
+                "0".to_string()
+            },
         ));
-        let form_refs: Vec<(&str, &str)> = form.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
+        let form_refs: Vec<(&str, &str)> =
+            form.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
         self.client
             .post(&url)
             .header("Cookie", &self.config.cookies)
@@ -235,7 +253,11 @@ impl DownloadClient for Pan115Client {
         Ok(HashMap::new())
     }
 
-    async fn create_category(&self, _name: &str, _save_path: Option<&str>) -> Result<(), ClientError> {
+    async fn create_category(
+        &self,
+        _name: &str,
+        _save_path: Option<&str>,
+    ) -> Result<(), ClientError> {
         Ok(())
     }
 
@@ -251,7 +273,12 @@ impl DownloadClient for Pan115Client {
         Ok(vec![])
     }
 
-    async fn set_file_priority(&self, _hash: &str, _file_ids: &[u32], _priority: u8) -> Result<(), ClientError> {
+    async fn set_file_priority(
+        &self,
+        _hash: &str,
+        _file_ids: &[u32],
+        _priority: u8,
+    ) -> Result<(), ClientError> {
         Ok(())
     }
 }

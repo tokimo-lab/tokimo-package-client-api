@@ -55,6 +55,9 @@ impl RequestCache {
 
     pub async fn size(&self) -> usize {
         let entries = self.entries.read().await;
-        entries.values().filter(|e| e.expire_at > Instant::now()).count()
+        entries
+            .values()
+            .filter(|e| e.expire_at > Instant::now())
+            .count()
     }
 }

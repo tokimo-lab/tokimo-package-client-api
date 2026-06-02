@@ -90,9 +90,12 @@ impl FanartClient {
         self.cache.clear().await;
     }
 
-    async fn request<T: serde::de::DeserializeOwned + serde::Serialize>(&self, path: &str) -> Result<T, ClientError> {
-        let mut url =
-            url::Url::parse(&format!("{}{}", self.base_url, path)).map_err(|e| ClientError::Other(e.to_string()))?;
+    async fn request<T: serde::de::DeserializeOwned + serde::Serialize>(
+        &self,
+        path: &str,
+    ) -> Result<T, ClientError> {
+        let mut url = url::Url::parse(&format!("{}{}", self.base_url, path))
+            .map_err(|e| ClientError::Other(e.to_string()))?;
 
         url.query_pairs_mut().append_pair("api_key", &self.api_key);
         if let Some(ref ck) = self.client_key {
@@ -126,11 +129,16 @@ impl FanartClient {
     }
 
     pub fn get_best_movie_poster(images: &FanartMovieImages, lang: &str) -> Option<String> {
-        pick_best(images.movieposter.as_deref().unwrap_or_default(), Some(lang)).map(|img| img.url.clone())
+        pick_best(
+            images.movieposter.as_deref().unwrap_or_default(),
+            Some(lang),
+        )
+        .map(|img| img.url.clone())
     }
 
     pub fn get_best_movie_background(images: &FanartMovieImages) -> Option<String> {
-        pick_best(images.moviebackground.as_deref().unwrap_or_default(), None).map(|img| img.url.clone())
+        pick_best(images.moviebackground.as_deref().unwrap_or_default(), None)
+            .map(|img| img.url.clone())
     }
 
     pub fn get_best_movie_logo(images: &FanartMovieImages, lang: &str) -> Option<String> {
@@ -141,15 +149,18 @@ impl FanartClient {
         if let Some(ref std) = images.movielogo {
             all.extend(std.iter());
         }
-        pick_best(&all.into_iter().cloned().collect::<Vec<_>>(), Some(lang)).map(|img| img.url.clone())
+        pick_best(&all.into_iter().cloned().collect::<Vec<_>>(), Some(lang))
+            .map(|img| img.url.clone())
     }
 
     pub fn get_best_tv_poster(images: &FanartTvImages, lang: &str) -> Option<String> {
-        pick_best(images.tvposter.as_deref().unwrap_or_default(), Some(lang)).map(|img| img.url.clone())
+        pick_best(images.tvposter.as_deref().unwrap_or_default(), Some(lang))
+            .map(|img| img.url.clone())
     }
 
     pub fn get_best_tv_background(images: &FanartTvImages) -> Option<String> {
-        pick_best(images.showbackground.as_deref().unwrap_or_default(), None).map(|img| img.url.clone())
+        pick_best(images.showbackground.as_deref().unwrap_or_default(), None)
+            .map(|img| img.url.clone())
     }
 
     pub fn get_best_tv_logo(images: &FanartTvImages, lang: &str) -> Option<String> {
@@ -160,10 +171,15 @@ impl FanartClient {
         if let Some(ref std) = images.tvlogo {
             all.extend(std.iter());
         }
-        pick_best(&all.into_iter().cloned().collect::<Vec<_>>(), Some(lang)).map(|img| img.url.clone())
+        pick_best(&all.into_iter().cloned().collect::<Vec<_>>(), Some(lang))
+            .map(|img| img.url.clone())
     }
 
-    pub fn get_season_poster(images: &FanartTvImages, season_number: i32, lang: &str) -> Option<String> {
+    pub fn get_season_poster(
+        images: &FanartTvImages,
+        season_number: i32,
+        lang: &str,
+    ) -> Option<String> {
         let season_str = season_number.to_string();
         let season_posters: Vec<FanartImage> = images
             .seasonposter

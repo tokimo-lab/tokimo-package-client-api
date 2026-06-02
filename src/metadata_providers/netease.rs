@@ -22,7 +22,11 @@ impl NeteaseClient {
     }
 
     /// Search albums by keyword.
-    async fn search(&self, keyword: &str, limit: u32) -> Result<Vec<AlbumSearchResult>, ClientError> {
+    async fn search(
+        &self,
+        keyword: &str,
+        limit: u32,
+    ) -> Result<Vec<AlbumSearchResult>, ClientError> {
         let url = format!("{NETEASE_API_BASE}/search/get");
         let resp = self
             .http
@@ -44,7 +48,10 @@ impl NeteaseClient {
         }
 
         let data: serde_json::Value = resp.json().await?;
-        let albums = data["result"]["albums"].as_array().cloned().unwrap_or_default();
+        let albums = data["result"]["albums"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default();
 
         Ok(albums
             .into_iter()
@@ -92,13 +99,16 @@ impl NeteaseClient {
 
         let artist_name = album["artist"]["name"].as_str().unwrap_or("").to_string();
         let artist_id = album["artist"]["id"].as_i64().map(|id| id.to_string());
-        let cover_url = album["picUrl"].as_str().map(|u| format!("{u}?param=500y500"));
+        let cover_url = album["picUrl"]
+            .as_str()
+            .map(|u| format!("{u}?param=500y500"));
 
         let year = album["publishTime"]
             .as_i64()
             .and_then(|ts| {
                 let secs = ts / 1000;
-                chrono::DateTime::from_timestamp(secs, 0).map(|dt| dt.format("%Y").to_string().parse::<i32>().ok())
+                chrono::DateTime::from_timestamp(secs, 0)
+                    .map(|dt| dt.format("%Y").to_string().parse::<i32>().ok())
             })
             .flatten();
 
@@ -121,7 +131,8 @@ impl NeteaseClient {
             year,
             release_date: album["publishTime"].as_i64().and_then(|ts| {
                 let secs = ts / 1000;
-                chrono::DateTime::from_timestamp(secs, 0).map(|dt| dt.format("%Y-%m-%d").to_string())
+                chrono::DateTime::from_timestamp(secs, 0)
+                    .map(|dt| dt.format("%Y-%m-%d").to_string())
             }),
             album_type: album["type"].as_str().map(String::from),
             genres: None, // Netease doesn't provide genres in album detail
@@ -169,7 +180,11 @@ impl super::MusicMetadataProvider for NeteaseClient {
         Ok(results)
     }
 
-    async fn search_albums_by_keyword(&self, keyword: &str, limit: u32) -> Result<Vec<AlbumSearchResult>, ClientError> {
+    async fn search_albums_by_keyword(
+        &self,
+        keyword: &str,
+        limit: u32,
+    ) -> Result<Vec<AlbumSearchResult>, ClientError> {
         self.search(keyword, limit).await
     }
 

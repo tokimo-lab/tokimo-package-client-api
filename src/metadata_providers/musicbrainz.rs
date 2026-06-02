@@ -48,9 +48,13 @@ impl MusicBrainzClient {
         *last = std::time::Instant::now();
     }
 
-    async fn mb_fetch(&self, path: &str, params: &[(&str, &str)]) -> Result<serde_json::Value, ClientError> {
-        let mut url =
-            url::Url::parse(&format!("{MB_BASE_URL}{path}")).map_err(|e| ClientError::Other(e.to_string()))?;
+    async fn mb_fetch(
+        &self,
+        path: &str,
+        params: &[(&str, &str)],
+    ) -> Result<serde_json::Value, ClientError> {
+        let mut url = url::Url::parse(&format!("{MB_BASE_URL}{path}"))
+            .map_err(|e| ClientError::Other(e.to_string()))?;
 
         url.query_pairs_mut().append_pair("fmt", "json");
         for (k, v) in params {
@@ -67,7 +71,9 @@ impl MusicBrainzClient {
                 .send()
                 .await?;
 
-            if (resp.status().as_u16() == 503 || resp.status().as_u16() == 429) && attempt < MAX_RETRIES {
+            if (resp.status().as_u16() == 503 || resp.status().as_u16() == 429)
+                && attempt < MAX_RETRIES
+            {
                 tokio::time::sleep(Duration::from_millis(2000 * 2u64.pow(attempt))).await;
                 continue;
             }
@@ -82,7 +88,9 @@ impl MusicBrainzClient {
             return Ok(resp.json().await?);
         }
 
-        Err(ClientError::Other("MusicBrainz: max retries exceeded".into()))
+        Err(ClientError::Other(
+            "MusicBrainz: max retries exceeded".into(),
+        ))
     }
 
     /// Search releases by artist and album name.
@@ -120,7 +128,10 @@ impl MusicBrainzClient {
         let data = self
             .mb_fetch(
                 &format!("/release/{mb_release_id}"),
-                &[("inc", "recordings+artist-credits+release-groups+genres+labels")],
+                &[(
+                    "inc",
+                    "recordings+artist-credits+release-groups+genres+labels",
+                )],
             )
             .await?;
 
@@ -128,7 +139,9 @@ impl MusicBrainzClient {
         let artist_credits = extract_artist_credits(&data["artist-credit"]);
         let rg = &data["release-group"];
         let date = data["date"].as_str();
-        let year = date.and_then(|d| d.get(..4)).and_then(|y| y.parse::<i32>().ok());
+        let year = date
+            .and_then(|d| d.get(..4))
+            .and_then(|y| y.parse::<i32>().ok());
 
         // Genres
         let mut genres: Vec<String> = Vec::new();
@@ -183,19 +196,39 @@ impl MusicBrainzClient {
             year,
             release_date: date.map(String::from),
             album_type: rg["primary-type"].as_str().map(str::to_lowercase),
-            genres: if genres.is_empty() { None } else { Some(genres) },
-            total_tracks: if total_tracks > 0 { Some(total_tracks) } else { None },
-            total_discs: if total_discs > 0 { Some(total_discs) } else { None },
+            genres: if genres.is_empty() {
+                None
+            } else {
+                Some(genres)
+            },
+            total_tracks: if total_tracks > 0 {
+                Some(total_tracks)
+            } else {
+                None
+            },
+            total_discs: if total_discs > 0 {
+                Some(total_discs)
+            } else {
+                None
+            },
             cover_url,
             overview: None,
             spotify_id: None,
-            tracks: if tracks.is_empty() { None } else { Some(tracks) },
+            tracks: if tracks.is_empty() {
+                None
+            } else {
+                Some(tracks)
+            },
             artist_credits,
         })
     }
 
     /// Search artists.
-    pub async fn search_artist(&self, name: &str, limit: u32) -> Result<Vec<ArtistSearchResult>, ClientError> {
+    pub async fn search_artist(
+        &self,
+        name: &str,
+        limit: u32,
+    ) -> Result<Vec<ArtistSearchResult>, ClientError> {
         let query = format!("artist:\"{name}\"");
         let limit_str = limit.to_string();
         let data = self
@@ -256,7 +289,9 @@ impl MusicBrainzClient {
                 let rel_type = rel["type"].as_str().unwrap_or("");
                 if let Some(url) = rel["url"]["resource"].as_str() {
                     match rel_type {
-                        "streaming music" | "free streaming" if url.contains("open.spotify.com/artist/") => {
+                        "streaming music" | "free streaming"
+                            if url.contains("open.spotify.com/artist/") =>
+                        {
                             spotify_id = url.split('/').next_back().map(String::from);
                         }
                         "wikipedia" if wikipedia_url.is_none() => {
@@ -305,7 +340,8 @@ impl MusicBrainzClient {
     }
 
     pub async fn test_connection(&self) -> Result<bool, ClientError> {
-        self.mb_fetch("/release", &[("query", "test"), ("limit", "1")]).await?;
+        self.mb_fetch("/release", &[("query", "test"), ("limit", "1")])
+            .await?;
         Ok(true)
     }
 }
@@ -355,7 +391,10 @@ fn extract_artist_name(credits: &serde_json::Value) -> (String, Option<String>) 
         display.push_str(joinphrase);
     }
 
-    let mb_id = arr.first().and_then(|c| c["artist"]["id"].as_str()).map(String::from);
+    let mb_id = arr
+        .first()
+        .and_then(|c| c["artist"]["id"].as_str())
+        .map(String::from);
 
     (display, mb_id)
 }
@@ -363,7 +402,9 @@ fn extract_artist_name(credits: &serde_json::Value) -> (String, Option<String>) 
 /// Extract individual artist credits from MB artist-credits array.
 /// Returns one entry per artist with their name and MB artist ID.
 fn extract_artist_credits(credits: &serde_json::Value) -> Vec<ArtistCredit> {
-    let Some(arr) = credits.as_array() else { return vec![] };
+    let Some(arr) = credits.as_array() else {
+        return vec![];
+    };
 
     arr.iter()
         .filter_map(|c| {
@@ -389,7 +430,9 @@ fn parse_release_list(data: &serde_json::Value) -> Vec<MusicMatchCandidate> {
         .map(|r| {
             let artist_info = extract_artist_name(&r["artist-credit"]);
             let date = r["date"].as_str();
-            let year = date.and_then(|d| d.get(..4)).and_then(|y| y.parse::<i32>().ok());
+            let year = date
+                .and_then(|d| d.get(..4))
+                .and_then(|y| y.parse::<i32>().ok());
 
             MusicMatchCandidate {
                 mb_release_id: r["id"].as_str().unwrap_or("").to_string(),
@@ -456,7 +499,10 @@ impl super::MusicMetadataProvider for MusicBrainzClient {
             .collect())
     }
 
-    async fn get_album_detail(&self, external_id: &str) -> Result<crate::types::AlbumDetail, ClientError> {
+    async fn get_album_detail(
+        &self,
+        external_id: &str,
+    ) -> Result<crate::types::AlbumDetail, ClientError> {
         let detail = self.get_release(external_id).await?;
         Ok(crate::types::AlbumDetail {
             source: crate::types::MetadataSource::MusicBrainz,
@@ -493,7 +539,10 @@ impl super::MusicMetadataProvider for MusicBrainzClient {
         })
     }
 
-    async fn get_artist_info(&self, external_id: &str) -> Result<crate::types::ArtistInfo, ClientError> {
+    async fn get_artist_info(
+        &self,
+        external_id: &str,
+    ) -> Result<crate::types::ArtistInfo, ClientError> {
         let detail = self.get_artist_detail(external_id).await?;
         Ok(crate::types::ArtistInfo {
             source: crate::types::MetadataSource::MusicBrainz,

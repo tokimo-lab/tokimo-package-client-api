@@ -52,13 +52,19 @@ impl Aria2Client {
         if let Some(error) = result.get("error")
             && !error.is_null()
         {
-            let msg = error.get("message").and_then(|v| v.as_str()).unwrap_or("Unknown error");
+            let msg = error
+                .get("message")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Unknown error");
             return Err(ClientError::Api {
                 status: 0,
                 message: msg.to_string(),
             });
         }
-        Ok(result.get("result").cloned().unwrap_or(serde_json::Value::Null))
+        Ok(result
+            .get("result")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null))
     }
 
     async fn collect_all_tasks(&self) -> Result<Vec<Aria2Task>, ClientError> {
@@ -89,7 +95,10 @@ impl Aria2Client {
             .await
             .unwrap_or_default();
         let stopped = self
-            .rpc_call("tellStopped", vec![serde_json::json!(0), serde_json::json!(1000), keys])
+            .rpc_call(
+                "tellStopped",
+                vec![serde_json::json!(0), serde_json::json!(1000), keys],
+            )
             .await
             .unwrap_or_default();
 
@@ -178,10 +187,19 @@ fn task_to_torrent_info(task: &Aria2Task) -> TorrentInfo {
 
     let size = task.total_length.parse::<u64>().unwrap_or(0);
     let completed = task.completed_length.parse::<u64>().unwrap_or(0);
-    let progress = if size > 0 { completed as f64 / size as f64 } else { 0.0 };
+    let progress = if size > 0 {
+        completed as f64 / size as f64
+    } else {
+        0.0
+    };
     let dl_speed = task.download_speed.parse::<u64>().unwrap_or(0);
     let up_speed = task.upload_speed.parse::<u64>().unwrap_or(0);
-    let uploaded = task.upload_length.as_deref().unwrap_or("0").parse::<u64>().unwrap_or(0);
+    let uploaded = task
+        .upload_length
+        .as_deref()
+        .unwrap_or("0")
+        .parse::<u64>()
+        .unwrap_or(0);
     let ratio = if completed > 0 {
         uploaded as f64 / completed as f64
     } else {
@@ -261,7 +279,10 @@ impl DownloadClient for Aria2Client {
 
     async fn get_torrent(&self, hash: &str) -> Result<Option<TorrentInfo>, ClientError> {
         let tasks = self.collect_all_tasks().await?;
-        Ok(tasks.iter().find(|t| t.gid == hash).map(task_to_torrent_info))
+        Ok(tasks
+            .iter()
+            .find(|t| t.gid == hash)
+            .map(task_to_torrent_info))
     }
 
     async fn add_torrent(&self, options: AddTorrentOptions) -> Result<(), ClientError> {
@@ -313,13 +334,20 @@ impl DownloadClient for Aria2Client {
         Ok(())
     }
 
-    async fn delete_torrents(&self, hashes: &[&str], _delete_files: bool) -> Result<(), ClientError> {
+    async fn delete_torrents(
+        &self,
+        hashes: &[&str],
+        _delete_files: bool,
+    ) -> Result<(), ClientError> {
         for gid in hashes {
             let _ = self
                 .rpc_call("remove", vec![serde_json::Value::String(gid.to_string())])
                 .await;
             let _ = self
-                .rpc_call("forceRemove", vec![serde_json::Value::String(gid.to_string())])
+                .rpc_call(
+                    "forceRemove",
+                    vec![serde_json::Value::String(gid.to_string())],
+                )
                 .await;
         }
         Ok(())
@@ -333,7 +361,11 @@ impl DownloadClient for Aria2Client {
         Ok(HashMap::new())
     }
 
-    async fn create_category(&self, _name: &str, _save_path: Option<&str>) -> Result<(), ClientError> {
+    async fn create_category(
+        &self,
+        _name: &str,
+        _save_path: Option<&str>,
+    ) -> Result<(), ClientError> {
         Ok(())
     }
 
@@ -358,7 +390,10 @@ impl DownloadClient for Aria2Client {
 
     async fn get_torrent_files(&self, hash: &str) -> Result<Vec<TorrentFile>, ClientError> {
         let result = self
-            .rpc_call("getFiles", vec![serde_json::Value::String(hash.to_string())])
+            .rpc_call(
+                "getFiles",
+                vec![serde_json::Value::String(hash.to_string())],
+            )
             .await?;
         let files: Vec<Aria2File> = serde_json::from_value(result).unwrap_or_default();
         Ok(files
@@ -366,7 +401,11 @@ impl DownloadClient for Aria2Client {
             .map(|f| {
                 let size = f.length.parse::<u64>().unwrap_or(0);
                 let completed = f.completed_length.parse::<u64>().unwrap_or(0);
-                let progress = if size > 0 { completed as f64 / size as f64 } else { 0.0 };
+                let progress = if size > 0 {
+                    completed as f64 / size as f64
+                } else {
+                    0.0
+                };
                 let index = f.index.parse::<u32>().unwrap_or(1).saturating_sub(1);
                 let name = std::path::Path::new(&f.path)
                     .file_name()
@@ -385,7 +424,12 @@ impl DownloadClient for Aria2Client {
             .collect())
     }
 
-    async fn set_file_priority(&self, hash: &str, file_ids: &[u32], priority: u8) -> Result<(), ClientError> {
+    async fn set_file_priority(
+        &self,
+        hash: &str,
+        file_ids: &[u32],
+        priority: u8,
+    ) -> Result<(), ClientError> {
         if priority == 0 {
             return Ok(());
         }

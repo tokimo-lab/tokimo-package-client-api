@@ -32,7 +32,11 @@ impl TransmissionClient {
         }
     }
 
-    async fn rpc_call(&self, method: &str, args: serde_json::Value) -> Result<serde_json::Value, ClientError> {
+    async fn rpc_call(
+        &self,
+        method: &str,
+        args: serde_json::Value,
+    ) -> Result<serde_json::Value, ClientError> {
         let url = format!("{}/transmission/rpc", self.config.url);
         let body = serde_json::json!({ "method": method, "arguments": args });
 
@@ -66,7 +70,9 @@ impl TransmissionClient {
                 let result: serde_json::Value = resp2.json().await?;
                 return self.check_result(result);
             }
-            return Err(ClientError::Other("Got 409 but no session ID header".to_string()));
+            return Err(ClientError::Other(
+                "Got 409 but no session ID header".to_string(),
+            ));
         }
 
         let result: serde_json::Value = resp.json().await?;
@@ -75,14 +81,20 @@ impl TransmissionClient {
 
     #[allow(clippy::unused_self)]
     fn check_result(&self, value: serde_json::Value) -> Result<serde_json::Value, ClientError> {
-        let result_str = value.get("result").and_then(|v| v.as_str()).unwrap_or("error");
+        let result_str = value
+            .get("result")
+            .and_then(|v| v.as_str())
+            .unwrap_or("error");
         if result_str != "success" {
             return Err(ClientError::Api {
                 status: 0,
                 message: result_str.to_string(),
             });
         }
-        Ok(value.get("arguments").cloned().unwrap_or(serde_json::Value::Null))
+        Ok(value
+            .get("arguments")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null))
     }
 }
 
@@ -244,7 +256,9 @@ impl DownloadClient for TransmissionClient {
 
     async fn get_torrent(&self, hash: &str) -> Result<Option<TorrentInfo>, ClientError> {
         let torrents = self.get_torrents(None, None).await?;
-        Ok(torrents.into_iter().find(|t| t.hash.eq_ignore_ascii_case(hash)))
+        Ok(torrents
+            .into_iter()
+            .find(|t| t.hash.eq_ignore_ascii_case(hash)))
     }
 
     async fn add_torrent(&self, options: AddTorrentOptions) -> Result<(), ClientError> {
@@ -287,7 +301,8 @@ impl DownloadClient for TransmissionClient {
             .iter()
             .map(|h| serde_json::Value::String(h.to_string()))
             .collect();
-        self.rpc_call("torrent-stop", serde_json::json!({ "ids": ids })).await?;
+        self.rpc_call("torrent-stop", serde_json::json!({ "ids": ids }))
+            .await?;
         Ok(())
     }
 
@@ -301,7 +316,11 @@ impl DownloadClient for TransmissionClient {
         Ok(())
     }
 
-    async fn delete_torrents(&self, hashes: &[&str], delete_files: bool) -> Result<(), ClientError> {
+    async fn delete_torrents(
+        &self,
+        hashes: &[&str],
+        delete_files: bool,
+    ) -> Result<(), ClientError> {
         let ids: Vec<serde_json::Value> = hashes
             .iter()
             .map(|h| serde_json::Value::String(h.to_string()))
@@ -319,8 +338,11 @@ impl DownloadClient for TransmissionClient {
             .iter()
             .map(|h| serde_json::Value::String(h.to_string()))
             .collect();
-        self.rpc_call("torrent-set", serde_json::json!({ "ids": ids, "labels": [category] }))
-            .await?;
+        self.rpc_call(
+            "torrent-set",
+            serde_json::json!({ "ids": ids, "labels": [category] }),
+        )
+        .await?;
         Ok(())
     }
 
@@ -328,12 +350,18 @@ impl DownloadClient for TransmissionClient {
         Ok(HashMap::new())
     }
 
-    async fn create_category(&self, _name: &str, _save_path: Option<&str>) -> Result<(), ClientError> {
+    async fn create_category(
+        &self,
+        _name: &str,
+        _save_path: Option<&str>,
+    ) -> Result<(), ClientError> {
         Ok(())
     }
 
     async fn get_transfer_info(&self) -> Result<TransferInfo, ClientError> {
-        let result = self.rpc_call("session-stats", serde_json::json!({})).await?;
+        let result = self
+            .rpc_call("session-stats", serde_json::json!({}))
+            .await?;
         let dl_speed = result
             .get("downloadSpeed")
             .and_then(serde_json::Value::as_u64)
@@ -377,10 +405,24 @@ impl DownloadClient for TransmissionClient {
             .into_iter()
             .enumerate()
             .map(|(i, f)| {
-                let name = f.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                let size = f.get("length").and_then(serde_json::Value::as_u64).unwrap_or(0);
-                let completed = f.get("bytesCompleted").and_then(serde_json::Value::as_u64).unwrap_or(0);
-                let progress = if size > 0 { completed as f64 / size as f64 } else { 0.0 };
+                let name = f
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let size = f
+                    .get("length")
+                    .and_then(serde_json::Value::as_u64)
+                    .unwrap_or(0);
+                let completed = f
+                    .get("bytesCompleted")
+                    .and_then(serde_json::Value::as_u64)
+                    .unwrap_or(0);
+                let progress = if size > 0 {
+                    completed as f64 / size as f64
+                } else {
+                    0.0
+                };
                 let priority = file_stats
                     .get(i)
                     .and_then(|s| s.get("priority"))
@@ -398,7 +440,12 @@ impl DownloadClient for TransmissionClient {
         Ok(result_files)
     }
 
-    async fn set_file_priority(&self, _hash: &str, _file_ids: &[u32], _priority: u8) -> Result<(), ClientError> {
+    async fn set_file_priority(
+        &self,
+        _hash: &str,
+        _file_ids: &[u32],
+        _priority: u8,
+    ) -> Result<(), ClientError> {
         Ok(())
     }
 }

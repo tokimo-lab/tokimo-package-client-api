@@ -72,7 +72,11 @@ impl NagerDateClient {
     /// Get all public holidays for a given country and year.
     ///
     /// `country_code` is ISO 3166-1 alpha-2 (e.g. "CN", "US", "JP").
-    pub async fn get_public_holidays(&self, year: u16, country_code: &str) -> Result<Vec<PublicHoliday>, ClientError> {
+    pub async fn get_public_holidays(
+        &self,
+        year: u16,
+        country_code: &str,
+    ) -> Result<Vec<PublicHoliday>, ClientError> {
         let cache_key = format!("nager:holidays:{country_code}:{year}");
         if let Some(cached) = self.cache.get::<Vec<PublicHoliday>>(&cache_key).await {
             return Ok(cached);
@@ -94,7 +98,11 @@ impl NagerDateClient {
     }
 
     /// Get long weekends for a given country and year.
-    pub async fn get_long_weekends(&self, year: u16, country_code: &str) -> Result<Vec<LongWeekend>, ClientError> {
+    pub async fn get_long_weekends(
+        &self,
+        year: u16,
+        country_code: &str,
+    ) -> Result<Vec<LongWeekend>, ClientError> {
         let cache_key = format!("nager:long_weekends:{country_code}:{year}");
         if let Some(cached) = self.cache.get::<Vec<LongWeekend>>(&cache_key).await {
             return Ok(cached);
@@ -138,7 +146,10 @@ impl NagerDateClient {
     }
 
     /// Get the next upcoming public holidays for a given country.
-    pub async fn get_next_public_holidays(&self, country_code: &str) -> Result<Vec<PublicHoliday>, ClientError> {
+    pub async fn get_next_public_holidays(
+        &self,
+        country_code: &str,
+    ) -> Result<Vec<PublicHoliday>, ClientError> {
         let cache_key = format!("nager:next:{country_code}");
         if let Some(cached) = self.cache.get::<Vec<PublicHoliday>>(&cache_key).await {
             return Ok(cached);

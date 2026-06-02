@@ -18,8 +18,7 @@ use crate::error::ClientError;
 const DEFAULT_CACHE_TTL: Duration = Duration::from_hours(1);
 const SEARCH_BASE: &str = "https://www.qidian.com/so";
 const DETAIL_BASE: &str = "https://book.qidian.com/info";
-const USER_AGENT: &str =
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 pub struct QidianConfig {
     pub http_client: reqwest::Client,
@@ -81,7 +80,10 @@ impl QidianClient {
     }
 
     /// Get book detail by Qidian book ID.
-    pub async fn get_book_detail(&self, qidian_id: &str) -> Result<Option<QidianBookDetail>, ClientError> {
+    pub async fn get_book_detail(
+        &self,
+        qidian_id: &str,
+    ) -> Result<Option<QidianBookDetail>, ClientError> {
         let cache_key = format!("qidian:detail:{qidian_id}");
         if let Some(cached) = self.cache.get::<Option<QidianBookDetail>>(&cache_key).await {
             return Ok(cached);
@@ -128,7 +130,10 @@ impl QidianClient {
         Ok(parse_search_html(&html))
     }
 
-    async fn scrape_detail(&self, qidian_id: &str) -> Result<Option<QidianBookDetail>, ClientError> {
+    async fn scrape_detail(
+        &self,
+        qidian_id: &str,
+    ) -> Result<Option<QidianBookDetail>, ClientError> {
         let url = format!("{DETAIL_BASE}/{qidian_id}/");
         let html = self.fetch_html(&url).await?;
         Ok(parse_detail_html(&html, qidian_id))
@@ -276,7 +281,9 @@ fn parse_detail_html(html: &str, qidian_id: &str) -> Option<QidianBookDetail> {
     // Status and word count from the state/info section
     let mut serial_status = None;
     let mut word_count = None;
-    for el in doc.select(&sel(".book-state span, .book-info .tag span, .count, p.tag span")) {
+    for el in doc.select(&sel(
+        ".book-state span, .book-info .tag span, .count, p.tag span",
+    )) {
         let t = text_content(&el);
         if t.contains('字') || t.contains("万") {
             word_count = Some(t);
@@ -287,7 +294,9 @@ fn parse_detail_html(html: &str, qidian_id: &str) -> Option<QidianBookDetail> {
 
     // Category
     let category = doc
-        .select(&sel(".book-state a, p.tag a:first-child, .book-info .tag a"))
+        .select(&sel(
+            ".book-state a, p.tag a:first-child, .book-info .tag a",
+        ))
         .next()
         .map(|e| text_content(&e));
 
@@ -300,7 +309,9 @@ fn parse_detail_html(html: &str, qidian_id: &str) -> Option<QidianBookDetail> {
 
     // Last chapter
     let last_chapter = doc
-        .select(&sel(".update a, .book-latest-chapter a, .detail-latest-chapter a"))
+        .select(&sel(
+            ".update a, .book-latest-chapter a, .detail-latest-chapter a",
+        ))
         .next()
         .map(|e| text_content(&e));
 
@@ -355,7 +366,9 @@ fn normalize_url(url: &str) -> String {
 /// Extract book ID from href like `//www.qidian.com/book/1115277/`.
 fn extract_book_id_from_href(href: &str) -> Option<String> {
     let re = regex::Regex::new(r"/book/(\d+)").ok()?;
-    re.captures(href).and_then(|c| c.get(1)).map(|m| m.as_str().to_string())
+    re.captures(href)
+        .and_then(|c| c.get(1))
+        .map(|m| m.as_str().to_string())
 }
 
 mod urlencoding {

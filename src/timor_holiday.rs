@@ -67,7 +67,10 @@ impl TimorHolidayClient {
     }
 
     /// Get the next upcoming holiday from a given date (or today if `None`).
-    pub async fn next_holiday(&self, date: Option<&str>) -> Result<TimorNextHolidayResponse, ClientError> {
+    pub async fn next_holiday(
+        &self,
+        date: Option<&str>,
+    ) -> Result<TimorNextHolidayResponse, ClientError> {
         let url = match date {
             Some(d) => format!("{BASE_URL}/next/{d}"),
             None => format!("{BASE_URL}/next"),

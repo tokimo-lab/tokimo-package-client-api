@@ -15,7 +15,9 @@ pub struct ProviderRegistry {
 
 impl ProviderRegistry {
     pub fn new() -> Self {
-        Self { providers: Vec::new() }
+        Self {
+            providers: Vec::new(),
+        }
     }
 
     /// Register a new provider.
@@ -36,7 +38,12 @@ impl ProviderRegistry {
     /// Search all providers concurrently and merge results.
     ///
     /// Returns results sorted by provider registration order, then by score.
-    pub async fn search_albums(&self, artist: &str, album: &str, limit: u32) -> Vec<AlbumSearchResult> {
+    pub async fn search_albums(
+        &self,
+        artist: &str,
+        album: &str,
+        limit: u32,
+    ) -> Vec<AlbumSearchResult> {
         let futures: Vec<_> = self
             .providers
             .iter()
@@ -44,7 +51,11 @@ impl ProviderRegistry {
                 let artist = artist.to_string();
                 let album = album.to_string();
                 let p = Arc::clone(p);
-                async move { p.search_albums(&artist, &album, limit).await.unwrap_or_default() }
+                async move {
+                    p.search_albums(&artist, &album, limit)
+                        .await
+                        .unwrap_or_default()
+                }
             })
             .collect();
 
@@ -57,14 +68,22 @@ impl ProviderRegistry {
     }
 
     /// Search all providers by keyword and merge results.
-    pub async fn search_albums_by_keyword(&self, keyword: &str, limit: u32) -> Vec<AlbumSearchResult> {
+    pub async fn search_albums_by_keyword(
+        &self,
+        keyword: &str,
+        limit: u32,
+    ) -> Vec<AlbumSearchResult> {
         let futures: Vec<_> = self
             .providers
             .iter()
             .map(|p| {
                 let keyword = keyword.to_string();
                 let p = Arc::clone(p);
-                async move { p.search_albums_by_keyword(&keyword, limit).await.unwrap_or_default() }
+                async move {
+                    p.search_albums_by_keyword(&keyword, limit)
+                        .await
+                        .unwrap_or_default()
+                }
             })
             .collect();
 
@@ -88,7 +107,11 @@ impl ProviderRegistry {
     }
 
     /// Get artist info from a specific provider.
-    pub async fn get_artist_info(&self, source: &MetadataSource, external_id: &str) -> Result<ArtistInfo, ClientError> {
+    pub async fn get_artist_info(
+        &self,
+        source: &MetadataSource,
+        external_id: &str,
+    ) -> Result<ArtistInfo, ClientError> {
         let provider = self
             .get(source)
             .ok_or_else(|| ClientError::Other(format!("provider not found: {source}")))?;

@@ -32,7 +32,11 @@ impl DelugeClient {
         }
     }
 
-    async fn rpc_call(&self, method: &str, params: Vec<serde_json::Value>) -> Result<serde_json::Value, ClientError> {
+    async fn rpc_call(
+        &self,
+        method: &str,
+        params: Vec<serde_json::Value>,
+    ) -> Result<serde_json::Value, ClientError> {
         let url = format!("{}/json", self.config.url);
         let body = serde_json::json!({
             "method": method,
@@ -44,13 +48,19 @@ impl DelugeClient {
         if let Some(error) = result.get("error")
             && !error.is_null()
         {
-            let msg = error.get("message").and_then(|v| v.as_str()).unwrap_or("Unknown error");
+            let msg = error
+                .get("message")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Unknown error");
             return Err(ClientError::Api {
                 status: 0,
                 message: msg.to_string(),
             });
         }
-        Ok(result.get("result").cloned().unwrap_or(serde_json::Value::Null))
+        Ok(result
+            .get("result")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null))
     }
 
     async fn ensure_logged_in(&self) -> Result<(), ClientError> {
@@ -68,7 +78,9 @@ impl DelugeClient {
             *self.logged_in.lock().await = true;
             Ok(())
         } else {
-            Err(ClientError::Auth("Deluge authentication failed".to_string()))
+            Err(ClientError::Auth(
+                "Deluge authentication failed".to_string(),
+            ))
         }
     }
 }
@@ -108,7 +120,10 @@ fn map_deluge_state(state: &str) -> TorrentState {
 }
 
 fn deluge_entry_to_torrent_info(hash: &str, v: &serde_json::Value) -> TorrentInfo {
-    let progress_raw = v.get("progress").and_then(serde_json::Value::as_f64).unwrap_or(0.0);
+    let progress_raw = v
+        .get("progress")
+        .and_then(serde_json::Value::as_f64)
+        .unwrap_or(0.0);
     let completion_on = v
         .get("completed_time")
         .and_then(serde_json::Value::as_f64)
@@ -117,8 +132,15 @@ fn deluge_entry_to_torrent_info(hash: &str, v: &serde_json::Value) -> TorrentInf
     let state_str = v.get("state").and_then(|x| x.as_str()).unwrap_or("");
     TorrentInfo {
         hash: hash.to_string(),
-        name: v.get("name").and_then(|x| x.as_str()).unwrap_or("").to_string(),
-        size: v.get("total_size").and_then(serde_json::Value::as_u64).unwrap_or(0),
+        name: v
+            .get("name")
+            .and_then(|x| x.as_str())
+            .unwrap_or("")
+            .to_string(),
+        size: v
+            .get("total_size")
+            .and_then(serde_json::Value::as_u64)
+            .unwrap_or(0),
         progress: progress_raw / 100.0,
         dl_speed: v
             .get("download_payload_rate")
@@ -132,21 +154,44 @@ fn deluge_entry_to_torrent_info(hash: &str, v: &serde_json::Value) -> TorrentInf
             .get("all_time_download")
             .and_then(serde_json::Value::as_u64)
             .unwrap_or(0),
-        uploaded: v.get("total_uploaded").and_then(serde_json::Value::as_u64).unwrap_or(0),
-        ratio: v.get("ratio").and_then(serde_json::Value::as_f64).unwrap_or(0.0),
+        uploaded: v
+            .get("total_uploaded")
+            .and_then(serde_json::Value::as_u64)
+            .unwrap_or(0),
+        ratio: v
+            .get("ratio")
+            .and_then(serde_json::Value::as_f64)
+            .unwrap_or(0.0),
         state: map_deluge_state(state_str),
-        category: v.get("label").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+        category: v
+            .get("label")
+            .and_then(|x| x.as_str())
+            .unwrap_or("")
+            .to_string(),
         tags: vec![],
-        save_path: v.get("save_path").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+        save_path: v
+            .get("save_path")
+            .and_then(|x| x.as_str())
+            .unwrap_or("")
+            .to_string(),
         added_on: v
             .get("time_added")
             .and_then(serde_json::Value::as_f64)
             .map_or(0, |f| f as i64),
         completion_on,
         seeding_time: v.get("seeding_time").and_then(serde_json::Value::as_u64),
-        eta: v.get("eta").and_then(serde_json::Value::as_i64).filter(|&e| e > 0),
-        seeds: v.get("num_seeds").and_then(serde_json::Value::as_u64).map(|n| n as u32),
-        peers: v.get("num_peers").and_then(serde_json::Value::as_u64).map(|n| n as u32),
+        eta: v
+            .get("eta")
+            .and_then(serde_json::Value::as_i64)
+            .filter(|&e| e > 0),
+        seeds: v
+            .get("num_seeds")
+            .and_then(serde_json::Value::as_u64)
+            .map(|n| n as u32),
+        peers: v
+            .get("num_peers")
+            .and_then(serde_json::Value::as_u64)
+            .map(|n| n as u32),
         tracker: v
             .get("tracker_host")
             .and_then(|x| x.as_str())
@@ -222,7 +267,9 @@ impl DownloadClient for DelugeClient {
 
     async fn get_torrent(&self, hash: &str) -> Result<Option<TorrentInfo>, ClientError> {
         let torrents = self.get_torrents(None, None).await?;
-        Ok(torrents.into_iter().find(|t| t.hash.eq_ignore_ascii_case(hash)))
+        Ok(torrents
+            .into_iter()
+            .find(|t| t.hash.eq_ignore_ascii_case(hash)))
     }
 
     async fn add_torrent(&self, options: AddTorrentOptions) -> Result<(), ClientError> {
@@ -284,7 +331,11 @@ impl DownloadClient for DelugeClient {
         Ok(())
     }
 
-    async fn delete_torrents(&self, hashes: &[&str], delete_files: bool) -> Result<(), ClientError> {
+    async fn delete_torrents(
+        &self,
+        hashes: &[&str],
+        delete_files: bool,
+    ) -> Result<(), ClientError> {
         self.ensure_logged_in().await?;
         for hash in hashes {
             self.rpc_call(
@@ -338,10 +389,17 @@ impl DownloadClient for DelugeClient {
         }
     }
 
-    async fn create_category(&self, name: &str, _save_path: Option<&str>) -> Result<(), ClientError> {
+    async fn create_category(
+        &self,
+        name: &str,
+        _save_path: Option<&str>,
+    ) -> Result<(), ClientError> {
         self.ensure_logged_in().await?;
         let _ = self
-            .rpc_call("label.add", vec![serde_json::Value::String(name.to_string())])
+            .rpc_call(
+                "label.add",
+                vec![serde_json::Value::String(name.to_string())],
+            )
             .await;
         Ok(())
     }
@@ -394,16 +452,37 @@ impl DownloadClient for DelugeClient {
         Ok(files
             .into_iter()
             .map(|f| TorrentFile {
-                index: f.get("index").and_then(serde_json::Value::as_u64).unwrap_or(0) as u32,
-                name: f.get("path").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                size: f.get("size").and_then(serde_json::Value::as_u64).unwrap_or(0),
-                progress: f.get("progress").and_then(serde_json::Value::as_f64).unwrap_or(0.0),
-                priority: f.get("priority").and_then(serde_json::Value::as_i64).unwrap_or(1) as i32,
+                index: f
+                    .get("index")
+                    .and_then(serde_json::Value::as_u64)
+                    .unwrap_or(0) as u32,
+                name: f
+                    .get("path")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                size: f
+                    .get("size")
+                    .and_then(serde_json::Value::as_u64)
+                    .unwrap_or(0),
+                progress: f
+                    .get("progress")
+                    .and_then(serde_json::Value::as_f64)
+                    .unwrap_or(0.0),
+                priority: f
+                    .get("priority")
+                    .and_then(serde_json::Value::as_i64)
+                    .unwrap_or(1) as i32,
             })
             .collect())
     }
 
-    async fn set_file_priority(&self, hash: &str, file_ids: &[u32], priority: u8) -> Result<(), ClientError> {
+    async fn set_file_priority(
+        &self,
+        hash: &str,
+        file_ids: &[u32],
+        priority: u8,
+    ) -> Result<(), ClientError> {
         self.ensure_logged_in().await?;
         let status = self
             .rpc_call(
@@ -414,7 +493,10 @@ impl DownloadClient for DelugeClient {
                 ],
             )
             .await?;
-        let num_files = status.get("num_files").and_then(serde_json::Value::as_u64).unwrap_or(0) as usize;
+        let num_files = status
+            .get("num_files")
+            .and_then(serde_json::Value::as_u64)
+            .unwrap_or(0) as usize;
         let mut priorities: Vec<u8> = vec![1; num_files];
         for &id in file_ids {
             if (id as usize) < num_files {

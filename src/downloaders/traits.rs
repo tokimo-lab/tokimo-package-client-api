@@ -111,7 +111,9 @@ pub trait DownloadClient {
     fn client_type(&self) -> DownloadClientType;
     fn capabilities(&self) -> ClientCapabilities;
 
-    fn test_connection(&self) -> impl std::future::Future<Output = Result<ClientStatus, ClientError>> + Send;
+    fn test_connection(
+        &self,
+    ) -> impl std::future::Future<Output = Result<ClientStatus, ClientError>> + Send;
     fn get_torrents(
         &self,
         filter: Option<&str>,
@@ -125,8 +127,14 @@ pub trait DownloadClient {
         &self,
         options: AddTorrentOptions,
     ) -> impl std::future::Future<Output = Result<(), ClientError>> + Send;
-    fn pause_torrents(&self, hashes: &[&str]) -> impl std::future::Future<Output = Result<(), ClientError>> + Send;
-    fn resume_torrents(&self, hashes: &[&str]) -> impl std::future::Future<Output = Result<(), ClientError>> + Send;
+    fn pause_torrents(
+        &self,
+        hashes: &[&str],
+    ) -> impl std::future::Future<Output = Result<(), ClientError>> + Send;
+    fn resume_torrents(
+        &self,
+        hashes: &[&str],
+    ) -> impl std::future::Future<Output = Result<(), ClientError>> + Send;
     fn delete_torrents(
         &self,
         hashes: &[&str],
@@ -145,7 +153,9 @@ pub trait DownloadClient {
         name: &str,
         save_path: Option<&str>,
     ) -> impl std::future::Future<Output = Result<(), ClientError>> + Send;
-    fn get_transfer_info(&self) -> impl std::future::Future<Output = Result<TransferInfo, ClientError>> + Send;
+    fn get_transfer_info(
+        &self,
+    ) -> impl std::future::Future<Output = Result<TransferInfo, ClientError>> + Send;
     fn get_torrent_files(
         &self,
         hash: &str,

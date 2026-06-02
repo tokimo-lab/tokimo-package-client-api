@@ -140,7 +140,8 @@ impl ThetvdbClient {
         {
             let guard = self.token.read().await;
             if let Some(ref state) = *guard
-                && std::time::Instant::now() < state.expires_at.checked_sub(TOKEN_REFRESH_BUFFER).unwrap()
+                && std::time::Instant::now()
+                    < state.expires_at.checked_sub(TOKEN_REFRESH_BUFFER).unwrap()
             {
                 return Ok(state.token.clone());
             }
@@ -159,7 +160,10 @@ impl ThetvdbClient {
             .await?;
 
         if !resp.status().is_success() {
-            return Err(ClientError::Auth(format!("TheTVDB login failed: {}", resp.status())));
+            return Err(ClientError::Auth(format!(
+                "TheTVDB login failed: {}",
+                resp.status()
+            )));
         }
 
         let data: LoginResponse = resp.json().await?;
@@ -211,7 +215,11 @@ impl ThetvdbClient {
         Ok(data)
     }
 
-    pub async fn search(&self, keyword: &str, limit: u32) -> Result<Vec<ThetvdbMedia>, ClientError> {
+    pub async fn search(
+        &self,
+        keyword: &str,
+        limit: u32,
+    ) -> Result<Vec<ThetvdbMedia>, ClientError> {
         let cache_key = format!("thetvdb:search:{keyword}:{limit}");
         let encoded = url::form_urlencoded::byte_serialize(keyword.as_bytes()).collect::<String>();
         let url = format!("{}/search?query={encoded}&limit={limit}", self.base_url);
@@ -228,7 +236,11 @@ impl ThetvdbClient {
                     _ => "other",
                 };
                 ThetvdbMedia {
-                    id: item.tvdb_id.clone().or(item.object_id.clone()).unwrap_or_default(),
+                    id: item
+                        .tvdb_id
+                        .clone()
+                        .or(item.object_id.clone())
+                        .unwrap_or_default(),
                     title: item.name.unwrap_or_default(),
                     original_title: None,
                     year: item.year,

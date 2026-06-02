@@ -227,7 +227,9 @@ impl DownloadClient for QBittorrentClient {
 
     async fn get_torrent(&self, hash: &str) -> Result<Option<TorrentInfo>, ClientError> {
         let torrents = self.get_torrents(None, None).await?;
-        Ok(torrents.into_iter().find(|t| t.hash.eq_ignore_ascii_case(hash)))
+        Ok(torrents
+            .into_iter()
+            .find(|t| t.hash.eq_ignore_ascii_case(hash)))
     }
 
     async fn add_torrent(&self, options: AddTorrentOptions) -> Result<(), ClientError> {
@@ -257,8 +259,13 @@ impl DownloadClient for QBittorrentClient {
         if let Some(skip) = options.skip_hash_check {
             form.push(("skip_checking".to_string(), skip.to_string()));
         }
-        let form_vec: Vec<(&str, &str)> = form.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
-        self.client.post(&url).form(form_vec.as_slice()).send().await?;
+        let form_vec: Vec<(&str, &str)> =
+            form.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
+        self.client
+            .post(&url)
+            .form(form_vec.as_slice())
+            .send()
+            .await?;
         Ok(())
     }
 
@@ -286,7 +293,11 @@ impl DownloadClient for QBittorrentClient {
         Ok(())
     }
 
-    async fn delete_torrents(&self, hashes: &[&str], delete_files: bool) -> Result<(), ClientError> {
+    async fn delete_torrents(
+        &self,
+        hashes: &[&str],
+        delete_files: bool,
+    ) -> Result<(), ClientError> {
         self.ensure_logged_in().await?;
         let url = format!("{}/api/v2/torrents/delete", self.config.url);
         let hashes_str = hashes.join("|");
@@ -330,7 +341,11 @@ impl DownloadClient for QBittorrentClient {
             .collect())
     }
 
-    async fn create_category(&self, name: &str, save_path: Option<&str>) -> Result<(), ClientError> {
+    async fn create_category(
+        &self,
+        name: &str,
+        save_path: Option<&str>,
+    ) -> Result<(), ClientError> {
         self.ensure_logged_in().await?;
         let url = format!("{}/api/v2/torrents/createCategory", self.config.url);
         let path = save_path.unwrap_or("");
@@ -363,16 +378,37 @@ impl DownloadClient for QBittorrentClient {
             .into_iter()
             .enumerate()
             .map(|(i, f)| TorrentFile {
-                index: f.get("index").and_then(serde_json::Value::as_u64).unwrap_or(i as u64) as u32,
-                name: f.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                size: f.get("size").and_then(serde_json::Value::as_u64).unwrap_or(0),
-                progress: f.get("progress").and_then(serde_json::Value::as_f64).unwrap_or(0.0),
-                priority: f.get("priority").and_then(serde_json::Value::as_i64).unwrap_or(0) as i32,
+                index: f
+                    .get("index")
+                    .and_then(serde_json::Value::as_u64)
+                    .unwrap_or(i as u64) as u32,
+                name: f
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                size: f
+                    .get("size")
+                    .and_then(serde_json::Value::as_u64)
+                    .unwrap_or(0),
+                progress: f
+                    .get("progress")
+                    .and_then(serde_json::Value::as_f64)
+                    .unwrap_or(0.0),
+                priority: f
+                    .get("priority")
+                    .and_then(serde_json::Value::as_i64)
+                    .unwrap_or(0) as i32,
             })
             .collect())
     }
 
-    async fn set_file_priority(&self, hash: &str, file_ids: &[u32], priority: u8) -> Result<(), ClientError> {
+    async fn set_file_priority(
+        &self,
+        hash: &str,
+        file_ids: &[u32],
+        priority: u8,
+    ) -> Result<(), ClientError> {
         self.ensure_logged_in().await?;
         let url = format!("{}/api/v2/torrents/filePrio", self.config.url);
         let ids_str: String = file_ids
@@ -383,7 +419,11 @@ impl DownloadClient for QBittorrentClient {
         let priority_str = priority.to_string();
         self.client
             .post(&url)
-            .form(&[("hash", hash), ("id", &ids_str), ("priority", &priority_str)])
+            .form(&[
+                ("hash", hash),
+                ("id", &ids_str),
+                ("priority", &priority_str),
+            ])
             .send()
             .await?;
         Ok(())

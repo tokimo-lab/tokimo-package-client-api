@@ -147,8 +147,9 @@ impl GeocodingClient {
         lat: f64,
     ) -> Result<GeoLocation, ClientError> {
         let location = format!("{lon:.6},{lat:.6}");
-        let mut url =
-            format!("https://restapi.amap.com/v3/geocode/regeo?key={api_key}&location={location}&extensions=base");
+        let mut url = format!(
+            "https://restapi.amap.com/v3/geocode/regeo?key={api_key}&location={location}&extensions=base"
+        );
 
         if let Some(sec) = secret
             && !sec.is_empty()
@@ -189,13 +190,26 @@ impl GeocodingClient {
 
         let comp = regeo.address_component;
         Ok(GeoLocation {
-            province: comp.as_ref().and_then(|c| c.province.as_ref()?.as_opt_string()),
+            province: comp
+                .as_ref()
+                .and_then(|c| c.province.as_ref()?.as_opt_string()),
             city: comp.as_ref().and_then(|c| c.city.as_ref()?.as_opt_string()),
-            district: comp.as_ref().and_then(|c| c.district.as_ref()?.as_opt_string()),
-            township: comp.as_ref().and_then(|c| c.township.as_ref()?.as_opt_string()),
-            adcode: comp.as_ref().and_then(|c| c.adcode.as_ref()?.as_opt_string()),
-            address: regeo.formatted_address.as_ref().and_then(AmapStrOrEmpty::as_opt_string),
-            country: comp.as_ref().and_then(|c| c.country.as_ref()?.as_opt_string()),
+            district: comp
+                .as_ref()
+                .and_then(|c| c.district.as_ref()?.as_opt_string()),
+            township: comp
+                .as_ref()
+                .and_then(|c| c.township.as_ref()?.as_opt_string()),
+            adcode: comp
+                .as_ref()
+                .and_then(|c| c.adcode.as_ref()?.as_opt_string()),
+            address: regeo
+                .formatted_address
+                .as_ref()
+                .and_then(AmapStrOrEmpty::as_opt_string),
+            country: comp
+                .as_ref()
+                .and_then(|c| c.country.as_ref()?.as_opt_string()),
         })
     }
 
@@ -210,7 +224,9 @@ impl GeocodingClient {
         let url = if let Some(secret) = secret_key {
             let sign_str = format!("/ws/geocoder/v1/?key={api_key}&location={location}{secret}");
             let sig = hex::encode(md5::Md5::digest(sign_str.as_bytes()));
-            format!("https://apis.map.qq.com/ws/geocoder/v1/?key={api_key}&location={location}&sig={sig}")
+            format!(
+                "https://apis.map.qq.com/ws/geocoder/v1/?key={api_key}&location={location}&sig={sig}"
+            )
         } else {
             format!("https://apis.map.qq.com/ws/geocoder/v1/?key={api_key}&location={location}")
         };
@@ -236,9 +252,13 @@ impl GeocodingClient {
 
         let comp = result.address_component.as_ref();
         Ok(GeoLocation {
-            province: comp.and_then(|c| c.province.clone()).filter(|s| !s.is_empty()),
+            province: comp
+                .and_then(|c| c.province.clone())
+                .filter(|s| !s.is_empty()),
             city: comp.and_then(|c| c.city.clone()).filter(|s| !s.is_empty()),
-            district: comp.and_then(|c| c.district.clone()).filter(|s| !s.is_empty()),
+            district: comp
+                .and_then(|c| c.district.clone())
+                .filter(|s| !s.is_empty()),
             township: None,
             adcode: result
                 .ad_info
@@ -246,7 +266,9 @@ impl GeocodingClient {
                 .and_then(|a| a.adcode.clone())
                 .filter(|s| !s.is_empty()),
             address: result.address.filter(|s| !s.is_empty()),
-            country: comp.and_then(|c| c.nation.clone()).filter(|s| !s.is_empty()),
+            country: comp
+                .and_then(|c| c.nation.clone())
+                .filter(|s| !s.is_empty()),
         })
     }
 
@@ -257,7 +279,9 @@ impl GeocodingClient {
         lat: f64,
     ) -> Result<GeoLocation, ClientError> {
         let post_str = format!("{{'lon':{lon:.6},'lat':{lat:.6},'ver':1}}");
-        let url = format!("http://api.tianditu.gov.cn/geocoder?postStr={post_str}&type=geocode&tk={server_key}");
+        let url = format!(
+            "http://api.tianditu.gov.cn/geocoder?postStr={post_str}&type=geocode&tk={server_key}"
+        );
 
         let resp: TiandituResponse = self
             .http
@@ -360,7 +384,9 @@ impl GeocodingClient {
         lon: f64,
         lat: f64,
     ) -> Result<GeoLocation, ClientError> {
-        let url = format!("https://api.maptiler.com/geocoding/{lon:.6},{lat:.6}.json?key={api_key}&language=zh");
+        let url = format!(
+            "https://api.maptiler.com/geocoding/{lon:.6},{lat:.6}.json?key={api_key}&language=zh"
+        );
 
         let resp: MapboxResponse = self
             .http

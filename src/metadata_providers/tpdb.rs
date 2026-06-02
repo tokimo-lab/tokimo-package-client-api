@@ -79,7 +79,10 @@ impl TpdbClient {
         self.cache.clear().await;
     }
 
-    pub async fn search_by_video_id(&self, video_id: &str) -> Result<Option<AdultMetadata>, ClientError> {
+    pub async fn search_by_video_id(
+        &self,
+        video_id: &str,
+    ) -> Result<Option<AdultMetadata>, ClientError> {
         let cache_key = format!("tpdb:{video_id}");
         if let Some(cached) = self.cache.get::<Option<AdultMetadata>>(&cache_key).await {
             return Ok(cached);
@@ -91,9 +94,12 @@ impl TpdbClient {
         Ok(metadata)
     }
 
-    async fn fetch_by_video_id(&self, video_id: &str) -> Result<Option<AdultMetadata>, ClientError> {
-        let mut url =
-            url::Url::parse(&format!("{}/scenes", self.base_url)).map_err(|e| ClientError::Other(e.to_string()))?;
+    async fn fetch_by_video_id(
+        &self,
+        video_id: &str,
+    ) -> Result<Option<AdultMetadata>, ClientError> {
+        let mut url = url::Url::parse(&format!("{}/scenes", self.base_url))
+            .map_err(|e| ClientError::Other(e.to_string()))?;
         url.query_pairs_mut()
             .append_pair("q", video_id)
             .append_pair("per_page", "5");
@@ -136,7 +142,10 @@ fn find_best_match<'a>(scenes: &'a [TpdbScene], video_id: &str) -> Option<&'a Tp
     // Title contains video ID
     for scene in scenes {
         if let Some(ref title) = scene.title
-            && title.to_uppercase().replace(['-', '_', ' '], "").contains(&normalized)
+            && title
+                .to_uppercase()
+                .replace(['-', '_', ' '], "")
+                .contains(&normalized)
         {
             return Some(scene);
         }

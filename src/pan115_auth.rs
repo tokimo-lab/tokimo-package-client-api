@@ -12,7 +12,11 @@ const PAN115_QR_IMAGE_URL: &str = "https://qrcodeapi.115.com/api/1.0/mac/1.0/qrc
 const PAN115_QR_LOGIN_API_PREFIX: &str = "https://passportapi.115.com/app/1.0";
 const PAN115_USER_AGENT: &str = "Mozilla/5.0 115Browser/27.0.5.7";
 
-const ENCODE_SET: &AsciiSet = &NON_ALPHANUMERIC.remove(b'-').remove(b'_').remove(b'.').remove(b'~');
+const ENCODE_SET: &AsciiSet = &NON_ALPHANUMERIC
+    .remove(b'-')
+    .remove(b'_')
+    .remove(b'.')
+    .remove(b'~');
 
 fn url_encode(s: &str) -> String {
     utf8_percent_encode(s, ENCODE_SET).to_string()
@@ -128,7 +132,10 @@ pub async fn start_qr_session() -> Result<Pan115QrSession, String> {
         ));
     }
 
-    let payload: QrTokenResponse = resp.json().await.map_err(|e| format!("115 QR API parse failed: {e}"))?;
+    let payload: QrTokenResponse = resp
+        .json()
+        .await
+        .map_err(|e| format!("115 QR API parse failed: {e}"))?;
 
     if payload.state != 1 {
         let base = QrBaseResponse {
@@ -219,7 +226,9 @@ pub async fn get_qr_status(uid: &str, sign: &str, time: i64) -> Result<Pan115QrS
 pub async fn exchange_qr_token(uid: &str, qrcode_source: &str) -> Result<String, String> {
     let client = Client::new();
     let resp = client
-        .post(format!("{PAN115_QR_LOGIN_API_PREFIX}/{qrcode_source}/1.0/login/qrcode"))
+        .post(format!(
+            "{PAN115_QR_LOGIN_API_PREFIX}/{qrcode_source}/1.0/login/qrcode"
+        ))
         .header("User-Agent", PAN115_USER_AGENT)
         .form(&[("account", uid), ("app", qrcode_source)])
         .timeout(std::time::Duration::from_secs(10))
