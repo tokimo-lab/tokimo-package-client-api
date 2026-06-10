@@ -135,9 +135,7 @@ impl OmdbClient {
     pub fn new(config: OmdbConfig) -> Self {
         Self {
             api_key: config.api_key,
-            base_url: config
-                .base_url
-                .unwrap_or_else(|| "https://www.omdbapi.com".to_string()),
+            base_url: config.base_url.unwrap_or_else(|| "https://www.omdbapi.com".to_string()),
             http: config.http_client,
             cache: RequestCache::new(config.cache_ttl.unwrap_or(DEFAULT_CACHE_TTL)),
         }
@@ -155,8 +153,7 @@ impl OmdbClient {
         &self,
         params: &[(&str, &str)],
     ) -> Result<T, ClientError> {
-        let mut url =
-            url::Url::parse(&self.base_url).map_err(|e| ClientError::Other(e.to_string()))?;
+        let mut url = url::Url::parse(&self.base_url).map_err(|e| ClientError::Other(e.to_string()))?;
 
         url.query_pairs_mut().append_pair("apikey", &self.api_key);
         for (k, v) in params {
@@ -182,11 +179,7 @@ impl OmdbClient {
     }
 
     /// Search by title (supports movie/series filter).
-    pub async fn search(
-        &self,
-        query: &str,
-        media_type: Option<&str>,
-    ) -> Result<Vec<OmdbSearchItem>, ClientError> {
+    pub async fn search(&self, query: &str, media_type: Option<&str>) -> Result<Vec<OmdbSearchItem>, ClientError> {
         let mut params = vec![("s", query)];
         if let Some(t) = media_type {
             params.push(("type", t));
@@ -215,15 +208,9 @@ impl OmdbClient {
     }
 
     /// Get season episodes by `IMDb` ID.
-    pub async fn get_season_detail(
-        &self,
-        imdb_id: &str,
-        season: u32,
-    ) -> Result<Option<OmdbSeasonDetail>, ClientError> {
+    pub async fn get_season_detail(&self, imdb_id: &str, season: u32) -> Result<Option<OmdbSeasonDetail>, ClientError> {
         let season_str = season.to_string();
-        let data: OmdbSeasonDetail = self
-            .request(&[("i", imdb_id), ("Season", &season_str)])
-            .await?;
+        let data: OmdbSeasonDetail = self.request(&[("i", imdb_id), ("Season", &season_str)]).await?;
         if data.response == "False" {
             return Ok(None);
         }

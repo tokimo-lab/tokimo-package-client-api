@@ -106,9 +106,7 @@ impl ProviderSelector {
                 let c_artist_norm = normalize(&c.artist);
                 if c_artist_norm == artist_norm {
                     score += 150;
-                } else if c_artist_norm.contains(&artist_norm)
-                    || artist_norm.contains(&c_artist_norm)
-                {
+                } else if c_artist_norm.contains(&artist_norm) || artist_norm.contains(&c_artist_norm) {
                     score += 50;
                 }
 
@@ -137,11 +135,7 @@ impl ProviderSelector {
     /// Otherwise, use Western strategy.
     pub fn auto_detect(artist: &str, album: &str) -> Self {
         let has_cjk = artist.chars().any(is_cjk) || album.chars().any(is_cjk);
-        if has_cjk {
-            Self::chinese()
-        } else {
-            Self::western()
-        }
+        if has_cjk { Self::chinese() } else { Self::western() }
     }
 }
 

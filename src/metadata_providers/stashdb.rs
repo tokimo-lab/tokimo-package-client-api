@@ -113,10 +113,7 @@ impl StashDBClient {
         self.cache.clear().await;
     }
 
-    pub async fn search_by_video_id(
-        &self,
-        video_id: &str,
-    ) -> Result<Option<AdultMetadata>, ClientError> {
+    pub async fn search_by_video_id(&self, video_id: &str) -> Result<Option<AdultMetadata>, ClientError> {
         let cache_key = format!("stashdb:{video_id}");
         if let Some(cached) = self.cache.get::<Option<AdultMetadata>>(&cache_key).await {
             return Ok(cached);
@@ -128,10 +125,7 @@ impl StashDBClient {
         Ok(metadata)
     }
 
-    async fn fetch_by_video_id(
-        &self,
-        video_id: &str,
-    ) -> Result<Option<AdultMetadata>, ClientError> {
+    async fn fetch_by_video_id(&self, video_id: &str) -> Result<Option<AdultMetadata>, ClientError> {
         #[derive(Serialize)]
         struct GqlRequest {
             query: &'static str,
@@ -199,10 +193,7 @@ fn find_best_match<'a>(scenes: &'a [StashDBScene], video_id: &str) -> Option<&'a
     // Title contains video ID
     for scene in scenes {
         if let Some(ref title) = scene.title
-            && title
-                .to_uppercase()
-                .replace(['-', '_', ' '], "")
-                .contains(&normalized)
+            && title.to_uppercase().replace(['-', '_', ' '], "").contains(&normalized)
         {
             return Some(scene);
         }

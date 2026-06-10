@@ -120,10 +120,7 @@ pub async fn get_qr_code(client: &Client) -> Result<WeclawQrSession, String> {
         .await
         .map_err(|e| format!("iLink QR request failed: {e}"))?;
 
-    let body: QrCodeResponse = resp
-        .json()
-        .await
-        .map_err(|e| format!("iLink QR parse failed: {e}"))?;
+    let body: QrCodeResponse = resp.json().await.map_err(|e| format!("iLink QR parse failed: {e}"))?;
 
     if body.ret != 0 {
         return Err(format!("iLink QR error: ret={}", body.ret));
@@ -131,9 +128,7 @@ pub async fn get_qr_code(client: &Client) -> Result<WeclawQrSession, String> {
 
     Ok(WeclawQrSession {
         qrcode: body.qrcode.ok_or("missing qrcode")?,
-        qrcode_url: body
-            .qrcode_img_content
-            .ok_or("missing qrcode_img_content")?,
+        qrcode_url: body.qrcode_img_content.ok_or("missing qrcode_img_content")?,
     })
 }
 
@@ -258,9 +253,7 @@ pub async fn poll_updates_with_timeout(
             let text = msg.item_list.and_then(|items| {
                 items.into_iter().find_map(|item| {
                     if item.item_type.unwrap_or(0) == 1 {
-                        item.text_item
-                            .and_then(|ti| ti.text)
-                            .filter(|s| !s.is_empty())
+                        item.text_item.and_then(|ti| ti.text).filter(|s| !s.is_empty())
                     } else {
                         None
                     }
@@ -279,11 +272,7 @@ pub async fn poll_updates_with_timeout(
 }
 
 /// Send a text message via iLink.
-pub async fn send_message(
-    client: &Client,
-    creds: &WeclawCredentials,
-    text: &str,
-) -> Result<(), String> {
+pub async fn send_message(client: &Client, creds: &WeclawCredentials, text: &str) -> Result<(), String> {
     let context_token = creds
         .context_token
         .as_deref()
@@ -330,31 +319,19 @@ pub async fn send_message(
     let resp_text = resp.text().await.unwrap_or_default();
 
     if !status.is_success() {
-        return Err(format!(
-            "iLink send HTTP {}: {}",
-            status.as_u16(),
-            resp_text
-        ));
+        return Err(format!("iLink send HTTP {}: {}", status.as_u16(), resp_text));
     }
 
     if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&resp_text) {
-        let ret = parsed
-            .get("ret")
-            .and_then(serde_json::Value::as_i64)
-            .unwrap_or(0);
-        let errcode = parsed
-            .get("errcode")
-            .and_then(serde_json::Value::as_i64)
-            .unwrap_or(0);
+        let ret = parsed.get("ret").and_then(serde_json::Value::as_i64).unwrap_or(0);
+        let errcode = parsed.get("errcode").and_then(serde_json::Value::as_i64).unwrap_or(0);
         if ret != 0 || errcode != 0 {
             let errmsg = parsed
                 .get("errmsg")
                 .or_else(|| parsed.get("err_msg"))
                 .and_then(serde_json::Value::as_str)
                 .unwrap_or("");
-            return Err(format!(
-                "iLink send error: ret={ret}, errcode={errcode}, msg={errmsg}"
-            ));
+            return Err(format!("iLink send error: ret={ret}, errcode={errcode}, msg={errmsg}"));
         }
     }
 

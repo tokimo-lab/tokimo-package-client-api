@@ -52,10 +52,7 @@ impl JavDBClient {
     }
 
     /// Search by video ID.
-    pub async fn search_by_video_id(
-        &self,
-        video_id: &str,
-    ) -> Result<Option<AdultMetadata>, ClientError> {
+    pub async fn search_by_video_id(&self, video_id: &str) -> Result<Option<AdultMetadata>, ClientError> {
         let cache_key = format!("javdb:{video_id}");
         if let Some(cached) = self.cache.get::<Option<AdultMetadata>>(&cache_key).await {
             return Ok(cached);
@@ -67,10 +64,7 @@ impl JavDBClient {
         Ok(metadata)
     }
 
-    async fn fetch_by_video_id(
-        &self,
-        video_id: &str,
-    ) -> Result<Option<AdultMetadata>, ClientError> {
+    async fn fetch_by_video_id(&self, video_id: &str) -> Result<Option<AdultMetadata>, ClientError> {
         let locale = if self.language == "ja" { "ja" } else { "zh" };
         let search_url = format!(
             "{}/search?q={}&locale={locale}",
@@ -78,10 +72,7 @@ impl JavDBClient {
             urlencoding::encode(video_id)
         );
 
-        let search_result = self
-            .bypass
-            .fetch_html(&search_url, Some(&self.cookie))
-            .await?;
+        let search_result = self.bypass.fetch_html(&search_url, Some(&self.cookie)).await?;
         check_cloudflare(&search_result.body)?;
         if search_result.status != 200 {
             return Ok(None);
@@ -92,10 +83,7 @@ impl JavDBClient {
         };
 
         let detail_url = format!("{}{}?locale={locale}", self.base_url, detail_path);
-        let detail_result = self
-            .bypass
-            .fetch_html(&detail_url, Some(&self.cookie))
-            .await?;
+        let detail_result = self.bypass.fetch_html(&detail_url, Some(&self.cookie)).await?;
         check_cloudflare(&detail_result.body)?;
         if detail_result.status != 200 {
             return Ok(None);
@@ -110,11 +98,7 @@ impl JavDBClient {
     }
 
     /// Search all videos by series prefix (multi-page).
-    pub async fn search_by_prefix(
-        &self,
-        prefix: &str,
-        max_pages: u32,
-    ) -> Result<Vec<AdultSeriesVideo>, ClientError> {
+    pub async fn search_by_prefix(&self, prefix: &str, max_pages: u32) -> Result<Vec<AdultSeriesVideo>, ClientError> {
         let cache_key = format!("javdb:prefix:{prefix}");
         if let Some(cached) = self.cache.get::<Vec<AdultSeriesVideo>>(&cache_key).await {
             return Ok(cached);
@@ -125,11 +109,7 @@ impl JavDBClient {
         Ok(result)
     }
 
-    async fn fetch_series_pages(
-        &self,
-        prefix: &str,
-        max_pages: u32,
-    ) -> Result<Vec<AdultSeriesVideo>, ClientError> {
+    async fn fetch_series_pages(&self, prefix: &str, max_pages: u32) -> Result<Vec<AdultSeriesVideo>, ClientError> {
         let normalized = prefix.to_uppercase();
         let locale = if self.language == "ja" { "ja" } else { "zh" };
         let mut all_videos: Vec<AdultSeriesVideo> = Vec::new();
@@ -211,12 +191,7 @@ fn extract_detail_path(html: &str, video_id: &str) -> Option<String> {
         .map(String::from)
 }
 
-fn parse_detail_page(
-    html: &str,
-    video_id: &str,
-    source_url: &str,
-    base_url: &str,
-) -> Option<AdultMetadata> {
+fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &str) -> Option<AdultMetadata> {
     let document = scraper::Html::parse_document(html);
 
     // Title
@@ -248,9 +223,7 @@ fn parse_detail_page(
         .and_then(|el| el.text().collect::<String>().trim().parse::<f64>().ok());
 
     // Metadata panels
-    let panel_sel =
-        scraper::Selector::parse(".movie-panel-info .panel-block, .video-meta-panel .panel-block")
-            .unwrap();
+    let panel_sel = scraper::Selector::parse(".movie-panel-info .panel-block, .video-meta-panel .panel-block").unwrap();
     let strong_sel = scraper::Selector::parse("strong, .header").unwrap();
     let value_sel = scraper::Selector::parse(".value, span:not(.header)").unwrap();
     let a_sel = scraper::Selector::parse("a").unwrap();
@@ -283,8 +256,7 @@ fn parse_detail_page(
                 .next()
                 .map(|a| a.text().collect::<String>().trim().to_string())
                 .filter(|s| !s.is_empty());
-        } else if label.contains("時長") || label.contains("時间") || label.contains("Duration")
-        {
+        } else if label.contains("時長") || label.contains("時间") || label.contains("Duration") {
             duration = num_re
                 .captures(&value)
                 .and_then(|c| c.get(1))
@@ -314,16 +286,8 @@ fn parse_detail_page(
         poster_url,
         cover_url: None,
         source_url: Some(source_url.to_string()),
-        actors: if actors.is_empty() {
-            None
-        } else {
-            Some(actors)
-        },
-        genres: if genres.is_empty() {
-            None
-        } else {
-            Some(genres)
-        },
+        actors: if actors.is_empty() { None } else { Some(actors) },
+        genres: if genres.is_empty() { None } else { Some(genres) },
         release_date,
         studio,
         duration,
@@ -395,9 +359,7 @@ fn parse_search_page_list(html: &str, prefix: &str, base_url: &str) -> Vec<Adult
 
 fn has_next_page_link(html: &str) -> bool {
     let document = scraper::Html::parse_document(html);
-    let sel =
-        scraper::Selector::parse(".pagination-next:not([disabled]), .pagination a.is-current + a")
-            .unwrap();
+    let sel = scraper::Selector::parse(".pagination-next:not([disabled]), .pagination a.is-current + a").unwrap();
     document.select(&sel).next().is_some()
 }
 

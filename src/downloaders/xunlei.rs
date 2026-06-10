@@ -69,11 +69,7 @@ impl XunleiClient {
         Ok(resp.json().await?)
     }
 
-    async fn post_json(
-        &self,
-        path: &str,
-        body: serde_json::Value,
-    ) -> Result<serde_json::Value, ClientError> {
+    async fn post_json(&self, path: &str, body: serde_json::Value) -> Result<serde_json::Value, ClientError> {
         let token = self.ensure_authenticated().await?;
         let url = format!("{}{path}", self.config.url);
         let resp = self
@@ -204,11 +200,8 @@ impl DownloadClient for XunleiClient {
                     "file_name": "",
                     "dir_id": "0",
                 });
-                self.post_json(
-                    "/webman/3rdparty/pan-xunlei-com/index.cgi/device/create_task",
-                    body,
-                )
-                .await?;
+                self.post_json("/webman/3rdparty/pan-xunlei-com/index.cgi/device/create_task", body)
+                    .await?;
             }
         }
         Ok(())
@@ -218,10 +211,7 @@ impl DownloadClient for XunleiClient {
         for hash in hashes {
             let body = serde_json::json!({ "task_id": hash });
             let _ = self
-                .post_json(
-                    "/webman/3rdparty/pan-xunlei-com/index.cgi/device/pause_task",
-                    body,
-                )
+                .post_json("/webman/3rdparty/pan-xunlei-com/index.cgi/device/pause_task", body)
                 .await;
         }
         Ok(())
@@ -231,27 +221,17 @@ impl DownloadClient for XunleiClient {
         for hash in hashes {
             let body = serde_json::json!({ "task_id": hash });
             let _ = self
-                .post_json(
-                    "/webman/3rdparty/pan-xunlei-com/index.cgi/device/resume_task",
-                    body,
-                )
+                .post_json("/webman/3rdparty/pan-xunlei-com/index.cgi/device/resume_task", body)
                 .await;
         }
         Ok(())
     }
 
-    async fn delete_torrents(
-        &self,
-        hashes: &[&str],
-        delete_files: bool,
-    ) -> Result<(), ClientError> {
+    async fn delete_torrents(&self, hashes: &[&str], delete_files: bool) -> Result<(), ClientError> {
         for hash in hashes {
             let body = serde_json::json!({ "task_id": hash, "delete_files": delete_files });
             let _ = self
-                .post_json(
-                    "/webman/3rdparty/pan-xunlei-com/index.cgi/device/delete_task",
-                    body,
-                )
+                .post_json("/webman/3rdparty/pan-xunlei-com/index.cgi/device/delete_task", body)
                 .await;
         }
         Ok(())
@@ -265,11 +245,7 @@ impl DownloadClient for XunleiClient {
         Ok(HashMap::new())
     }
 
-    async fn create_category(
-        &self,
-        _name: &str,
-        _save_path: Option<&str>,
-    ) -> Result<(), ClientError> {
+    async fn create_category(&self, _name: &str, _save_path: Option<&str>) -> Result<(), ClientError> {
         Ok(())
     }
 
@@ -285,12 +261,7 @@ impl DownloadClient for XunleiClient {
         Ok(vec![])
     }
 
-    async fn set_file_priority(
-        &self,
-        _hash: &str,
-        _file_ids: &[u32],
-        _priority: u8,
-    ) -> Result<(), ClientError> {
+    async fn set_file_priority(&self, _hash: &str, _file_ids: &[u32], _priority: u8) -> Result<(), ClientError> {
         Ok(())
     }
 }

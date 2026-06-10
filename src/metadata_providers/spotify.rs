@@ -80,19 +80,15 @@ impl SpotifyClient {
         {
             let guard = self.token.read().await;
             if let Some(ref state) = *guard
-                && std::time::Instant::now()
-                    < state
-                        .expires_at
-                        .checked_sub(Duration::from_mins(1))
-                        .unwrap()
+                && std::time::Instant::now() < state.expires_at.checked_sub(Duration::from_mins(1)).unwrap()
             {
                 return Ok(state.access_token.clone());
             }
         }
 
         use base64::Engine;
-        let credentials = base64::engine::general_purpose::STANDARD
-            .encode(format!("{}:{}", self.client_id, self.client_secret));
+        let credentials =
+            base64::engine::general_purpose::STANDARD.encode(format!("{}:{}", self.client_id, self.client_secret));
 
         let resp = self
             .http
@@ -104,10 +100,7 @@ impl SpotifyClient {
             .await?;
 
         if !resp.status().is_success() {
-            return Err(ClientError::Auth(format!(
-                "Spotify token error: {}",
-                resp.status()
-            )));
+            return Err(ClientError::Auth(format!("Spotify token error: {}", resp.status())));
         }
 
         #[derive(Deserialize)]
@@ -126,14 +119,10 @@ impl SpotifyClient {
         Ok(data.access_token)
     }
 
-    async fn api_fetch(
-        &self,
-        path: &str,
-        params: &[(&str, &str)],
-    ) -> Result<serde_json::Value, ClientError> {
+    async fn api_fetch(&self, path: &str, params: &[(&str, &str)]) -> Result<serde_json::Value, ClientError> {
         let token = self.get_token().await?;
-        let mut url = url::Url::parse(&format!("{SPOTIFY_API_URL}{path}"))
-            .map_err(|e| ClientError::Other(e.to_string()))?;
+        let mut url =
+            url::Url::parse(&format!("{SPOTIFY_API_URL}{path}")).map_err(|e| ClientError::Other(e.to_string()))?;
         for (k, v) in params {
             url.query_pairs_mut().append_pair(k, v);
         }
@@ -162,40 +151,24 @@ impl SpotifyClient {
         let q = format!("album:{album} artist:{artist}");
         let limit_str = limit.to_string();
         let data = self
-            .api_fetch(
-                "/search",
-                &[("q", &q), ("type", "album"), ("limit", &limit_str)],
-            )
+            .api_fetch("/search", &[("q", &q), ("type", "album"), ("limit", &limit_str)])
             .await?;
 
-        let items = data["albums"]["items"]
-            .as_array()
-            .cloned()
-            .unwrap_or_default();
+        let items = data["albums"]["items"].as_array().cloned().unwrap_or_default();
 
         Ok(items.into_iter().map(parse_album_item).collect())
     }
 
     /// Get album detail by Spotify ID.
-    pub async fn get_album(
-        &self,
-        spotify_id: &str,
-    ) -> Result<SpotifyAlbumSearchResult, ClientError> {
-        let data = self
-            .api_fetch(&format!("/albums/{spotify_id}"), &[])
-            .await?;
+    pub async fn get_album(&self, spotify_id: &str) -> Result<SpotifyAlbumSearchResult, ClientError> {
+        let data = self.api_fetch(&format!("/albums/{spotify_id}"), &[]).await?;
         Ok(parse_album_item(data))
     }
 
     /// Get genres for an artist (by name search).
     /// Fetch artist image URL by Spotify artist ID (extracted from `MusicBrainz` url-rels).
-    pub async fn get_artist_photo_by_id(
-        &self,
-        spotify_id: &str,
-    ) -> Result<Option<String>, ClientError> {
-        let data = self
-            .api_fetch(&format!("/artists/{spotify_id}"), &[])
-            .await?;
+    pub async fn get_artist_photo_by_id(&self, spotify_id: &str) -> Result<Option<String>, ClientError> {
+        let data = self.api_fetch(&format!("/artists/{spotify_id}"), &[]).await?;
 
         let url = data["images"]
             .as_array()
@@ -233,15 +206,9 @@ impl SpotifyClient {
         let q = format!("album:{album}");
         let limit_str = limit.to_string();
         let data = self
-            .api_fetch(
-                "/search",
-                &[("q", &q), ("type", "album"), ("limit", &limit_str)],
-            )
+            .api_fetch("/search", &[("q", &q), ("type", "album"), ("limit", &limit_str)])
             .await?;
-        let items = data["albums"]["items"]
-            .as_array()
-            .cloned()
-            .unwrap_or_default();
+        let items = data["albums"]["items"].as_array().cloned().unwrap_or_default();
         Ok(items.into_iter().map(parse_album_item).collect())
     }
 
@@ -257,11 +224,7 @@ impl SpotifyClient {
         {
             let genres = artist["genres"]
                 .as_array()
-                .map(|arr| {
-                    arr.iter()
-                        .filter_map(|v| v.as_str().map(String::from))
-                        .collect()
-                })
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
                 .unwrap_or_default();
             return Ok(genres);
         }
@@ -330,11 +293,9 @@ fn parse_album_item(item: serde_json::Value) -> SpotifyAlbumSearchResult {
         total_tracks: item["total_tracks"].as_i64().map(|n| n as i32),
         album_type: item["album_type"].as_str().map(String::from),
         cover_url,
-        genres: item["genres"].as_array().map(|arr| {
-            arr.iter()
-                .filter_map(|v| v.as_str().map(String::from))
-                .collect()
-        }),
+        genres: item["genres"]
+            .as_array()
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect()),
         artist_refs,
         tracks,
     }

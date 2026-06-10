@@ -46,10 +46,7 @@ impl JavBusClient {
     }
 
     /// Search by video ID (e.g., "FC2-PPV-4847315").
-    pub async fn search_by_video_id(
-        &self,
-        video_id: &str,
-    ) -> Result<Option<AdultMetadata>, ClientError> {
+    pub async fn search_by_video_id(&self, video_id: &str) -> Result<Option<AdultMetadata>, ClientError> {
         let cache_key = format!("javbus:{video_id}");
         if let Some(cached) = self.cache.get::<Option<AdultMetadata>>(&cache_key).await {
             return Ok(cached);
@@ -63,11 +60,7 @@ impl JavBusClient {
 
     async fn fetch_detail(&self, video_id: &str) -> Result<Option<AdultMetadata>, ClientError> {
         let lang_prefix = if self.language == "ja" { "/ja" } else { "" };
-        let url = format!(
-            "{}{lang_prefix}/{}",
-            self.base_url,
-            urlencoding::encode(video_id)
-        );
+        let url = format!("{}{lang_prefix}/{}", self.base_url, urlencoding::encode(video_id));
 
         let result = self
             .bypass
@@ -87,20 +80,11 @@ impl JavBusClient {
             return Ok(None);
         }
 
-        Ok(parse_detail_page(
-            &result.body,
-            video_id,
-            &url,
-            &self.base_url,
-        ))
+        Ok(parse_detail_page(&result.body, video_id, &url, &self.base_url))
     }
 
     /// Search all videos by series prefix (multi-page).
-    pub async fn search_by_prefix(
-        &self,
-        prefix: &str,
-        max_pages: u32,
-    ) -> Result<Vec<AdultSeriesVideo>, ClientError> {
+    pub async fn search_by_prefix(&self, prefix: &str, max_pages: u32) -> Result<Vec<AdultSeriesVideo>, ClientError> {
         let cache_key = format!("javbus:prefix:{prefix}");
         if let Some(cached) = self.cache.get::<Vec<AdultSeriesVideo>>(&cache_key).await {
             return Ok(cached);
@@ -111,11 +95,7 @@ impl JavBusClient {
         Ok(result)
     }
 
-    async fn fetch_series_pages(
-        &self,
-        prefix: &str,
-        max_pages: u32,
-    ) -> Result<Vec<AdultSeriesVideo>, ClientError> {
+    async fn fetch_series_pages(&self, prefix: &str, max_pages: u32) -> Result<Vec<AdultSeriesVideo>, ClientError> {
         let normalized = prefix.to_uppercase();
         let mut all_videos: Vec<AdultSeriesVideo> = Vec::new();
         let mut seen = std::collections::HashSet::new();
@@ -172,10 +152,7 @@ impl JavBusClient {
     }
 
     /// Get thumbnail URL from search page (fallback when URL derivation fails).
-    pub async fn fetch_thumb_url_from_search(
-        &self,
-        video_id: &str,
-    ) -> Result<Option<String>, ClientError> {
+    pub async fn fetch_thumb_url_from_search(&self, video_id: &str) -> Result<Option<String>, ClientError> {
         let url = format!(
             "{}/search/{}&type=1&parent=ce",
             self.base_url,
@@ -200,8 +177,7 @@ impl JavBusClient {
 
         let document = scraper::Html::parse_document(&result.body);
         let upper = video_id.to_uppercase();
-        let item_sel =
-            scraper::Selector::parse("#waterfall .item, .movie-box, a.movie-box").unwrap();
+        let item_sel = scraper::Selector::parse("#waterfall .item, .movie-box, a.movie-box").unwrap();
         let date_sel = scraper::Selector::parse("date").unwrap();
         let img_sel = scraper::Selector::parse("img").unwrap();
 
@@ -211,10 +187,7 @@ impl JavBusClient {
                 .next()
                 .map(|d| d.text().collect::<String>().trim().to_uppercase());
             if vid.as_deref() == Some(&upper)
-                && let Some(src) = el
-                    .select(&img_sel)
-                    .next()
-                    .and_then(|img| img.value().attr("src"))
+                && let Some(src) = el.select(&img_sel).next().and_then(|img| img.value().attr("src"))
             {
                 return Ok(Some(resolve_url(src, &self.base_url)));
             }
@@ -232,12 +205,7 @@ fn check_cloudflare(body: &str) -> Result<(), ClientError> {
     }
 }
 
-fn parse_detail_page(
-    html: &str,
-    video_id: &str,
-    source_url: &str,
-    base_url: &str,
-) -> Option<AdultMetadata> {
+fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &str) -> Option<AdultMetadata> {
     let document = scraper::Html::parse_document(html);
 
     let h3_sel = scraper::Selector::parse("h3").unwrap();
@@ -264,10 +232,9 @@ fn parse_detail_page(
                 .and_then(|el| el.value().attr("src"))
         });
     let cover_url = raw_cover.map(|u| resolve_url(u, base_url));
-    let poster_url = cover_url.as_ref().map(|u| {
-        u.replace("/pics/cover/", "/pics/thumb/")
-            .replace("_b.jpg", ".jpg")
-    });
+    let poster_url = cover_url
+        .as_ref()
+        .map(|u| u.replace("/pics/cover/", "/pics/thumb/").replace("_b.jpg", ".jpg"));
 
     // Actors
     let actor_sel = scraper::Selector::parse(".star-name a").unwrap();
@@ -322,16 +289,8 @@ fn parse_detail_page(
         poster_url,
         cover_url,
         source_url: Some(source_url.to_string()),
-        actors: if actors.is_empty() {
-            None
-        } else {
-            Some(actors)
-        },
-        genres: if genres.is_empty() {
-            None
-        } else {
-            Some(genres)
-        },
+        actors: if actors.is_empty() { None } else { Some(actors) },
+        genres: if genres.is_empty() { None } else { Some(genres) },
         release_date,
         studio,
         duration,

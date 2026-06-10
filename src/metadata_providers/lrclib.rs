@@ -41,8 +41,8 @@ pub async fn fetch_lyrics(
     duration: Option<u32>,
 ) -> Result<Option<LyricsResult>, ClientError> {
     // Step 1: exact match via /api/get
-    let mut get_url = url::Url::parse(&format!("{LRCLIB_BASE_URL}/get"))
-        .map_err(|e| ClientError::Other(e.to_string()))?;
+    let mut get_url =
+        url::Url::parse(&format!("{LRCLIB_BASE_URL}/get")).map_err(|e| ClientError::Other(e.to_string()))?;
     get_url
         .query_pairs_mut()
         .append_pair("artist_name", artist)
@@ -51,16 +51,10 @@ pub async fn fetch_lyrics(
         get_url.query_pairs_mut().append_pair("album_name", album);
     }
     if let Some(dur) = duration {
-        get_url
-            .query_pairs_mut()
-            .append_pair("duration", &dur.to_string());
+        get_url.query_pairs_mut().append_pair("duration", &dur.to_string());
     }
 
-    let resp = http
-        .get(get_url)
-        .header("User-Agent", "tokimo/1.0")
-        .send()
-        .await?;
+    let resp = http.get(get_url).header("User-Agent", "tokimo/1.0").send().await?;
 
     if resp.status().is_success() {
         let data: LrclibResponse = resp.json().await?;
@@ -75,18 +69,14 @@ pub async fn fetch_lyrics(
     }
 
     // Step 2: fallback to /api/search (lenient, no duration constraint)
-    let mut search_url = url::Url::parse(&format!("{LRCLIB_BASE_URL}/search"))
-        .map_err(|e| ClientError::Other(e.to_string()))?;
+    let mut search_url =
+        url::Url::parse(&format!("{LRCLIB_BASE_URL}/search")).map_err(|e| ClientError::Other(e.to_string()))?;
     search_url
         .query_pairs_mut()
         .append_pair("artist_name", artist)
         .append_pair("track_name", title);
 
-    let search_resp = http
-        .get(search_url)
-        .header("User-Agent", "tokimo/1.0")
-        .send()
-        .await?;
+    let search_resp = http.get(search_url).header("User-Agent", "tokimo/1.0").send().await?;
 
     if !search_resp.status().is_success() {
         return Ok(None);

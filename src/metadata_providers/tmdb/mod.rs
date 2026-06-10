@@ -56,8 +56,8 @@ impl TmdbClient {
         path: &str,
         params: &[(&str, &str)],
     ) -> Result<T, ClientError> {
-        let mut url = url::Url::parse(&format!("{}{}", self.base_url, path))
-            .map_err(|e| ClientError::Other(e.to_string()))?;
+        let mut url =
+            url::Url::parse(&format!("{}{}", self.base_url, path)).map_err(|e| ClientError::Other(e.to_string()))?;
 
         url.query_pairs_mut()
             .append_pair("api_key", &self.api_key)
@@ -89,20 +89,12 @@ impl TmdbClient {
 
     // ---- Search ----
 
-    pub async fn search_multi(
-        &self,
-        query: &str,
-        page: u32,
-    ) -> Result<Vec<TmdbMedia>, ClientError> {
+    pub async fn search_multi(&self, query: &str, page: u32) -> Result<Vec<TmdbMedia>, ClientError> {
         let page_str = page.to_string();
         let data: types::TmdbSearchResult = self
             .request(
                 "/search/multi",
-                &[
-                    ("query", query),
-                    ("page", &page_str),
-                    ("include_adult", "false"),
-                ],
+                &[("query", query), ("page", &page_str), ("include_adult", "false")],
             )
             .await?;
 
@@ -122,11 +114,7 @@ impl TmdbClient {
     ) -> Result<Vec<TmdbMedia>, ClientError> {
         let page_str = page.to_string();
         let year_str = year.map(|y| y.to_string());
-        let mut params = vec![
-            ("query", query),
-            ("page", &page_str),
-            ("include_adult", "false"),
-        ];
+        let mut params = vec![("query", query), ("page", &page_str), ("include_adult", "false")];
         if let Some(ref y) = year_str {
             params.push(("year", y));
         }
@@ -142,19 +130,10 @@ impl TmdbClient {
             .collect())
     }
 
-    pub async fn search_tv(
-        &self,
-        query: &str,
-        year: Option<u32>,
-        page: u32,
-    ) -> Result<Vec<TmdbMedia>, ClientError> {
+    pub async fn search_tv(&self, query: &str, year: Option<u32>, page: u32) -> Result<Vec<TmdbMedia>, ClientError> {
         let page_str = page.to_string();
         let year_str = year.map(|y| y.to_string());
-        let mut params = vec![
-            ("query", query),
-            ("page", &page_str),
-            ("include_adult", "false"),
-        ];
+        let mut params = vec![("query", query), ("page", &page_str), ("include_adult", "false")];
         if let Some(ref y) = year_str {
             params.push(("first_air_date_year", y));
         }
@@ -173,9 +152,7 @@ impl TmdbClient {
     // ---- Genres ----
 
     pub async fn list_genres(&self, media_type: &str) -> Result<Vec<TmdbGenre>, ClientError> {
-        let data: types::TmdbGenreListResponse = self
-            .request(&format!("/genre/{media_type}/list"), &[])
-            .await?;
+        let data: types::TmdbGenreListResponse = self.request(&format!("/genre/{media_type}/list"), &[]).await?;
         Ok(data.genres)
     }
 
@@ -183,10 +160,7 @@ impl TmdbClient {
 
     pub async fn get_movie_detail(&self, movie_id: i64) -> Result<TmdbMediaDetail, ClientError> {
         let data: types::TmdbMovieDetailRaw = self
-            .request(
-                &format!("/movie/{movie_id}"),
-                &[("append_to_response", "credits")],
-            )
+            .request(&format!("/movie/{movie_id}"), &[("append_to_response", "credits")])
             .await?;
 
         let mut base_item = data.base;
@@ -201,9 +175,7 @@ impl TmdbClient {
                     name: c.name,
                     role: c.character,
                     tmdb_id: c.id,
-                    thumb: c
-                        .profile_path
-                        .map(|p| format!("{}/w185{p}", self.image_base_url)),
+                    thumb: c.profile_path.map(|p| format!("{}/w185{p}", self.image_base_url)),
                 })
                 .collect()
         });
@@ -228,9 +200,7 @@ impl TmdbClient {
                     .map(|c| TmdbCompany {
                         id: c.id,
                         name: c.name,
-                        logo_path: c
-                            .logo_path
-                            .map(|p| format!("{}/w200{p}", self.image_base_url)),
+                        logo_path: c.logo_path.map(|p| format!("{}/w200{p}", self.image_base_url)),
                     })
                     .collect()
             }),
@@ -260,9 +230,7 @@ impl TmdbClient {
                     name: c.name,
                     role: c.character,
                     tmdb_id: c.id,
-                    thumb: c
-                        .profile_path
-                        .map(|p| format!("{}/w185{p}", self.image_base_url)),
+                    thumb: c.profile_path.map(|p| format!("{}/w185{p}", self.image_base_url)),
                 })
                 .collect()
         });
@@ -285,9 +253,7 @@ impl TmdbClient {
                     .map(|c| TmdbCompany {
                         id: c.id,
                         name: c.name,
-                        logo_path: c
-                            .logo_path
-                            .map(|p| format!("{}/w200{p}", self.image_base_url)),
+                        logo_path: c.logo_path.map(|p| format!("{}/w200{p}", self.image_base_url)),
                     })
                     .collect()
             }),
@@ -299,10 +265,7 @@ impl TmdbClient {
 
     pub async fn find_by_imdb_id(&self, imdb_id: &str) -> Result<Option<TmdbMedia>, ClientError> {
         let data: types::TmdbFindResult = self
-            .request(
-                &format!("/find/{imdb_id}"),
-                &[("external_source", "imdb_id")],
-            )
+            .request(&format!("/find/{imdb_id}"), &[("external_source", "imdb_id")])
             .await?;
 
         if let Some(mut movie) = data.movie_results.into_iter().next() {
@@ -342,21 +305,14 @@ impl TmdbClient {
     }
 
     /// Resolve an `IMDb` ID to its canonical parent-level `IMDb` ID, TMDB ID, and media type.
-    pub async fn resolve_imdb_id(
-        &self,
-        imdb_id: &str,
-    ) -> Result<Option<ResolvedImdbId>, ClientError> {
+    pub async fn resolve_imdb_id(&self, imdb_id: &str) -> Result<Option<ResolvedImdbId>, ClientError> {
         let data: types::TmdbFindResult = self
-            .request(
-                &format!("/find/{imdb_id}"),
-                &[("external_source", "imdb_id")],
-            )
+            .request(&format!("/find/{imdb_id}"), &[("external_source", "imdb_id")])
             .await?;
 
         if let Some(movie) = data.movie_results.first() {
             let movie_id = movie.id;
-            let detail: Result<types::TmdbMovieDetailRaw, _> =
-                self.request(&format!("/movie/{movie_id}"), &[]).await;
+            let detail: Result<types::TmdbMovieDetailRaw, _> = self.request(&format!("/movie/{movie_id}"), &[]).await;
             let resolved_imdb = detail
                 .ok()
                 .and_then(|d| d.imdb_id)
@@ -389,10 +345,7 @@ impl TmdbClient {
 
     async fn resolve_tv_imdb(&self, tv_id: i64, fallback_imdb: &str) -> ResolvedImdbId {
         let detail: Result<types::TmdbTvDetailRaw, _> = self
-            .request(
-                &format!("/tv/{tv_id}"),
-                &[("append_to_response", "external_ids")],
-            )
+            .request(&format!("/tv/{tv_id}"), &[("append_to_response", "external_ids")])
             .await;
         let resolved_imdb = detail
             .ok()
@@ -410,9 +363,7 @@ impl TmdbClient {
 
     pub async fn get_popular_movies(&self, page: u32) -> Result<Vec<TmdbMedia>, ClientError> {
         let page_str = page.to_string();
-        let data: types::TmdbSearchResult = self
-            .request("/movie/popular", &[("page", &page_str)])
-            .await?;
+        let data: types::TmdbSearchResult = self.request("/movie/popular", &[("page", &page_str)]).await?;
         Ok(data
             .results
             .into_iter()
@@ -425,8 +376,7 @@ impl TmdbClient {
 
     pub async fn get_popular_tv(&self, page: u32) -> Result<Vec<TmdbMedia>, ClientError> {
         let page_str = page.to_string();
-        let data: types::TmdbSearchResult =
-            self.request("/tv/popular", &[("page", &page_str)]).await?;
+        let data: types::TmdbSearchResult = self.request("/tv/popular", &[("page", &page_str)]).await?;
         Ok(data
             .results
             .into_iter()
@@ -439,11 +389,7 @@ impl TmdbClient {
 
     // ---- Season detail ----
 
-    pub async fn get_tv_season_detail(
-        &self,
-        tv_id: i64,
-        season_number: i32,
-    ) -> Result<TmdbSeasonDetail, ClientError> {
+    pub async fn get_tv_season_detail(&self, tv_id: i64, season_number: i32) -> Result<TmdbSeasonDetail, ClientError> {
         self.request(
             &format!("/tv/{tv_id}/season/{season_number}"),
             &[("append_to_response", "credits")],
@@ -461,13 +407,8 @@ impl TmdbClient {
         .await
     }
 
-    pub async fn get_movie_cast(
-        &self,
-        movie_id: i64,
-    ) -> Result<Vec<SimpleCastMember>, ClientError> {
-        let data: types::TmdbCredits = self
-            .request(&format!("/movie/{movie_id}/credits"), &[])
-            .await?;
+    pub async fn get_movie_cast(&self, movie_id: i64) -> Result<Vec<SimpleCastMember>, ClientError> {
+        let data: types::TmdbCredits = self.request(&format!("/movie/{movie_id}/credits"), &[]).await?;
         Ok(data
             .cast
             .unwrap_or_default()
@@ -494,12 +435,8 @@ impl TmdbClient {
             .collect())
     }
 
-    pub async fn search_person(
-        &self,
-        query: &str,
-    ) -> Result<Vec<TmdbPersonSearchItem>, ClientError> {
-        let data: types::TmdbPersonSearchResponse =
-            self.request("/search/person", &[("query", query)]).await?;
+    pub async fn search_person(&self, query: &str) -> Result<Vec<TmdbPersonSearchItem>, ClientError> {
+        let data: types::TmdbPersonSearchResponse = self.request("/search/person", &[("query", query)]).await?;
         Ok(data.results)
     }
 

@@ -104,11 +104,7 @@ impl OpenMeteoClient {
         }
     }
 
-    pub async fn fetch_forecast(
-        &self,
-        lat: f64,
-        lon: f64,
-    ) -> Result<OmForecastResponse, ClientError> {
+    pub async fn fetch_forecast(&self, lat: f64, lon: f64) -> Result<OmForecastResponse, ClientError> {
         let url = format!(
             "https://api.open-meteo.com/v1/forecast\
              ?latitude={lat}&longitude={lon}\
@@ -135,11 +131,7 @@ impl OpenMeteoClient {
         Ok(resp.json::<OmForecastResponse>().await?)
     }
 
-    pub async fn fetch_air_quality(
-        &self,
-        lat: f64,
-        lon: f64,
-    ) -> Result<OmAirQualityResponse, ClientError> {
+    pub async fn fetch_air_quality(&self, lat: f64, lon: f64) -> Result<OmAirQualityResponse, ClientError> {
         let url = format!(
             "https://air-quality-api.open-meteo.com/v1/air-quality\
              ?latitude={lat}&longitude={lon}\

@@ -3,7 +3,8 @@ use reqwest::header::ACCEPT;
 use crate::error::ClientError;
 
 pub const ASSRT_BASE_URL: &str = "https://assrt.net";
-pub const ASSRT_USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+pub const ASSRT_USER_AGENT: &str =
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
 pub fn absolute_url(path: &str) -> String {
     if path.starts_with("http://") || path.starts_with("https://") {

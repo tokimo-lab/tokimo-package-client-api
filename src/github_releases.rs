@@ -21,9 +21,7 @@ impl GithubReleasesClient {
     pub fn new(config: GithubReleasesConfig) -> Self {
         Self {
             http: config.http_client,
-            user_agent: config
-                .user_agent
-                .unwrap_or_else(|| "rust-client-api/1.0".into()),
+            user_agent: config.user_agent.unwrap_or_else(|| "rust-client-api/1.0".into()),
         }
     }
 

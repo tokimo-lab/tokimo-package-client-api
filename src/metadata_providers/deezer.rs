@@ -17,12 +17,7 @@ impl DeezerClient {
     /// Uses Deezer's free public API — no API key required.
     pub async fn get_artist_photo(&self, name: &str) -> Result<Option<String>, ClientError> {
         let url = format!("{DEEZER_API}/search/artist");
-        let resp = self
-            .http
-            .get(&url)
-            .query(&[("q", name), ("limit", "1")])
-            .send()
-            .await?;
+        let resp = self.http.get(&url).query(&[("q", name), ("limit", "1")]).send().await?;
 
         if !resp.status().is_success() {
             return Ok(None);
@@ -35,9 +30,7 @@ impl DeezerClient {
             .and_then(|arr: &Vec<serde_json::Value>| arr.first())
             .and_then(|artist: &serde_json::Value| {
                 // Prefer xl (1000x1000), fall back to big (250x250)
-                artist["picture_xl"]
-                    .as_str()
-                    .or_else(|| artist["picture_big"].as_str())
+                artist["picture_xl"].as_str().or_else(|| artist["picture_big"].as_str())
             })
             .map(String::from);
 

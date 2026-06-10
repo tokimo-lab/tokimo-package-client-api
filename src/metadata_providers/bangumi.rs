@@ -166,12 +166,8 @@ impl BangumiClient {
     pub fn new(config: BangumiConfig) -> Self {
         Self {
             access_token: config.access_token,
-            base_url: config
-                .base_url
-                .unwrap_or_else(|| BANGUMI_BASE_URL.to_string()),
-            user_agent: config
-                .user_agent
-                .unwrap_or_else(|| DEFAULT_USER_AGENT.to_string()),
+            base_url: config.base_url.unwrap_or_else(|| BANGUMI_BASE_URL.to_string()),
+            user_agent: config.user_agent.unwrap_or_else(|| DEFAULT_USER_AGENT.to_string()),
             http: config.http_client,
             cache: RequestCache::new(config.cache_ttl.unwrap_or(DEFAULT_CACHE_TTL)),
         }
@@ -209,12 +205,7 @@ impl BangumiClient {
             urlencoding::encode(keyword)
         );
 
-        let resp = self
-            .http
-            .get(&url)
-            .headers(self.build_headers())
-            .send()
-            .await?;
+        let resp = self.http.get(&url).headers(self.build_headers()).send().await?;
 
         if !resp.status().is_success() {
             return Err(ClientError::Api {
@@ -276,11 +267,7 @@ impl BangumiClient {
     /// Get subject detail by ID.
     pub async fn get_subject(&self, id: i64) -> Result<Option<BangumiSubjectDetail>, ClientError> {
         let cache_key = format!("bangumi:subject:{id}");
-        if let Some(cached) = self
-            .cache
-            .get::<Option<BangumiSubjectDetail>>(&cache_key)
-            .await
-        {
+        if let Some(cached) = self.cache.get::<Option<BangumiSubjectDetail>>(&cache_key).await {
             return Ok(cached);
         }
 
@@ -292,9 +279,7 @@ impl BangumiClient {
             .await?;
 
         if resp.status().as_u16() == 404 {
-            self.cache
-                .set(&cache_key, &None::<BangumiSubjectDetail>)
-                .await;
+            self.cache.set(&cache_key, &None::<BangumiSubjectDetail>).await;
             return Ok(None);
         }
 

@@ -36,24 +36,13 @@ impl NominatimClient {
     pub fn new(config: NominatimConfig) -> Self {
         Self {
             http: config.http_client,
-            user_agent: config
-                .user_agent
-                .unwrap_or_else(|| "rust-client-api/1.0".into()),
+            user_agent: config.user_agent.unwrap_or_else(|| "rust-client-api/1.0".into()),
         }
     }
 
-    pub async fn search(
-        &self,
-        query: &str,
-        limit: u8,
-        lang: &str,
-    ) -> Result<Vec<NominatimEntry>, ClientError> {
-        let encoded_q =
-            percent_encoding::utf8_percent_encode(query, percent_encoding::NON_ALPHANUMERIC)
-                .to_string();
-        let encoded_lang =
-            percent_encoding::utf8_percent_encode(lang, percent_encoding::NON_ALPHANUMERIC)
-                .to_string();
+    pub async fn search(&self, query: &str, limit: u8, lang: &str) -> Result<Vec<NominatimEntry>, ClientError> {
+        let encoded_q = percent_encoding::utf8_percent_encode(query, percent_encoding::NON_ALPHANUMERIC).to_string();
+        let encoded_lang = percent_encoding::utf8_percent_encode(lang, percent_encoding::NON_ALPHANUMERIC).to_string();
         let url = format!(
             "https://nominatim.openstreetmap.org/search?q={encoded_q}&format=json&limit={limit}&accept-language={encoded_lang}&addressdetails=1"
         );

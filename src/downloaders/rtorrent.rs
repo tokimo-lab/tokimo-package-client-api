@@ -57,10 +57,7 @@ fn strip_xml_tags(s: &str) -> String {
 }
 
 fn xmlrpc_string(val: &str) -> String {
-    let escaped = val
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;");
+    let escaped = val.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
     format!("<string>{escaped}</string>")
 }
 
@@ -169,16 +166,8 @@ fn rtorrent_row_to_torrent_info(row: &[String]) -> Option<TorrentInfo> {
     let message = row[19].clone();
     let category = row[20].clone();
 
-    let progress = if size > 0 {
-        completed as f64 / size as f64
-    } else {
-        0.0
-    };
-    let completion_on = if finished_on > 0 {
-        Some(finished_on)
-    } else {
-        None
-    };
+    let progress = if size > 0 { completed as f64 / size as f64 } else { 0.0 };
+    let completion_on = if finished_on > 0 { Some(finished_on) } else { None };
 
     let torrent_state = if hashing != 0 {
         TorrentState::CheckingDl
@@ -278,27 +267,19 @@ impl DownloadClient for RTorrentClient {
 
     async fn get_torrent(&self, hash: &str) -> Result<Option<TorrentInfo>, ClientError> {
         let torrents = self.get_torrents(None, None).await?;
-        Ok(torrents
-            .into_iter()
-            .find(|t| t.hash.eq_ignore_ascii_case(hash)))
+        Ok(torrents.into_iter().find(|t| t.hash.eq_ignore_ascii_case(hash)))
     }
 
     async fn add_torrent(&self, options: AddTorrentOptions) -> Result<(), ClientError> {
         if let Some(urls) = &options.urls {
             for url in urls {
-                let xml = build_call(
-                    "load.start_verbose",
-                    &[xmlrpc_string(""), xmlrpc_string(url)],
-                );
+                let xml = build_call("load.start_verbose", &[xmlrpc_string(""), xmlrpc_string(url)]);
                 self.xmlrpc_call(&xml).await?;
             }
         }
         if let Some(torrents) = &options.torrents {
             for torrent in torrents {
-                let xml = build_call(
-                    "load.raw_start_verbose",
-                    &[xmlrpc_string(""), xmlrpc_base64(torrent)],
-                );
+                let xml = build_call("load.raw_start_verbose", &[xmlrpc_string(""), xmlrpc_base64(torrent)]);
                 self.xmlrpc_call(&xml).await?;
             }
         }
@@ -321,11 +302,7 @@ impl DownloadClient for RTorrentClient {
         Ok(())
     }
 
-    async fn delete_torrents(
-        &self,
-        hashes: &[&str],
-        delete_files: bool,
-    ) -> Result<(), ClientError> {
+    async fn delete_torrents(&self, hashes: &[&str], delete_files: bool) -> Result<(), ClientError> {
         for hash in hashes {
             if delete_files {
                 let xml = build_call("d.delete_tied", &[xmlrpc_string(hash)]);
@@ -341,10 +318,7 @@ impl DownloadClient for RTorrentClient {
 
     async fn set_category(&self, hashes: &[&str], category: &str) -> Result<(), ClientError> {
         for hash in hashes {
-            let xml = build_call(
-                "d.custom1.set",
-                &[xmlrpc_string(hash), xmlrpc_string(category)],
-            );
+            let xml = build_call("d.custom1.set", &[xmlrpc_string(hash), xmlrpc_string(category)]);
             self.xmlrpc_call(&xml).await?;
         }
         Ok(())
@@ -354,11 +328,7 @@ impl DownloadClient for RTorrentClient {
         Ok(HashMap::new())
     }
 
-    async fn create_category(
-        &self,
-        _name: &str,
-        _save_path: Option<&str>,
-    ) -> Result<(), ClientError> {
+    async fn create_category(&self, _name: &str, _save_path: Option<&str>) -> Result<(), ClientError> {
         Ok(())
     }
 
@@ -424,12 +394,7 @@ impl DownloadClient for RTorrentClient {
             .collect())
     }
 
-    async fn set_file_priority(
-        &self,
-        hash: &str,
-        file_ids: &[u32],
-        priority: u8,
-    ) -> Result<(), ClientError> {
+    async fn set_file_priority(&self, hash: &str, file_ids: &[u32], priority: u8) -> Result<(), ClientError> {
         for &id in file_ids {
             let file_key = format!("{hash}:f{id}");
             let priority_xml = format!("<i4>{priority}</i4>");

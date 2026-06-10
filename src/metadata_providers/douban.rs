@@ -222,19 +222,12 @@ impl DoubanClient {
     }
 
     pub fn mode(&self) -> &str {
-        if self.cookie.is_some() {
-            "frodo"
-        } else {
-            "scraping"
-        }
+        if self.cookie.is_some() { "frodo" } else { "scraping" }
     }
 
     // ---- Public API ----
 
-    pub async fn find_by_imdb_id(
-        &self,
-        imdb_id: &str,
-    ) -> Result<Option<DoubanDetail>, ClientError> {
+    pub async fn find_by_imdb_id(&self, imdb_id: &str) -> Result<Option<DoubanDetail>, ClientError> {
         let cache_key = format!("douban:imdb:{imdb_id}");
         if let Some(cached) = self.cache.get::<Option<DoubanDetail>>(&cache_key).await {
             return Ok(cached);
@@ -313,10 +306,7 @@ impl DoubanClient {
     }
 
     /// Get book detail by Douban ID.
-    pub async fn get_book_detail(
-        &self,
-        douban_id: &str,
-    ) -> Result<Option<DoubanBookDetail>, ClientError> {
+    pub async fn get_book_detail(&self, douban_id: &str) -> Result<Option<DoubanBookDetail>, ClientError> {
         let cache_key = format!("douban:book:detail:{douban_id}");
         if let Some(cached) = self.cache.get::<Option<DoubanBookDetail>>(&cache_key).await {
             return Ok(cached);
@@ -334,10 +324,7 @@ impl DoubanClient {
     }
 
     /// Search book by ISBN.
-    pub async fn find_book_by_isbn(
-        &self,
-        isbn: &str,
-    ) -> Result<Option<DoubanBookDetail>, ClientError> {
+    pub async fn find_book_by_isbn(&self, isbn: &str) -> Result<Option<DoubanBookDetail>, ClientError> {
         let results = self.search_books(isbn).await?;
         if let Some(first) = results.first() {
             return self.get_book_detail(&first.douban_id).await;
@@ -352,8 +339,8 @@ impl DoubanClient {
         path: &str,
         params: &[(&str, &str)],
     ) -> Result<T, ClientError> {
-        let mut url = url::Url::parse(&format!("{FRODO_BASE_URL}{path}"))
-            .map_err(|e| ClientError::Other(e.to_string()))?;
+        let mut url =
+            url::Url::parse(&format!("{FRODO_BASE_URL}{path}")).map_err(|e| ClientError::Other(e.to_string()))?;
 
         url.query_pairs_mut().append_pair("apikey", FRODO_API_KEY);
         for (k, v) in params {
@@ -386,10 +373,7 @@ impl DoubanClient {
         Ok(resp.json().await?)
     }
 
-    async fn frodo_find_by_imdb_id(
-        &self,
-        imdb_id: &str,
-    ) -> Result<Option<DoubanDetail>, ClientError> {
+    async fn frodo_find_by_imdb_id(&self, imdb_id: &str) -> Result<Option<DoubanDetail>, ClientError> {
         match self
             .frodo_request::<FrodoSubjectResponse>(&format!("/movie/imdb/{imdb_id}"), &[])
             .await
@@ -464,14 +448,8 @@ impl DoubanClient {
         Ok(resp.text().await?)
     }
 
-    async fn scraping_find_by_imdb_id(
-        &self,
-        imdb_id: &str,
-    ) -> Result<Option<DoubanDetail>, ClientError> {
-        let suggest_url = format!(
-            "{DOUBAN_WEB_BASE}/j/subject_suggest?q={}",
-            urlencoding::encode(imdb_id)
-        );
+    async fn scraping_find_by_imdb_id(&self, imdb_id: &str) -> Result<Option<DoubanDetail>, ClientError> {
+        let suggest_url = format!("{DOUBAN_WEB_BASE}/j/subject_suggest?q={}", urlencoding::encode(imdb_id));
         let resp = self
             .http
             .get(&suggest_url)
@@ -508,19 +486,13 @@ impl DoubanClient {
         Ok(None)
     }
 
-    async fn scraping_get_detail(
-        &self,
-        douban_id: &str,
-    ) -> Result<Option<DoubanDetail>, ClientError> {
+    async fn scraping_get_detail(&self, douban_id: &str) -> Result<Option<DoubanDetail>, ClientError> {
         let html = self.web_request(&format!("/subject/{douban_id}/")).await?;
         Ok(parse_detail_html(&html, douban_id))
     }
 
     async fn scraping_search(&self, query: &str) -> Result<Vec<DoubanSearchItem>, ClientError> {
-        let suggest_url = format!(
-            "{DOUBAN_WEB_BASE}/j/subject_suggest?q={}",
-            urlencoding::encode(query)
-        );
+        let suggest_url = format!("{DOUBAN_WEB_BASE}/j/subject_suggest?q={}", urlencoding::encode(query));
         let resp = self
             .http
             .get(&suggest_url)
@@ -583,10 +555,7 @@ impl DoubanClient {
             .collect())
     }
 
-    async fn frodo_get_book_detail(
-        &self,
-        douban_id: &str,
-    ) -> Result<Option<DoubanBookDetail>, ClientError> {
+    async fn frodo_get_book_detail(&self, douban_id: &str) -> Result<Option<DoubanBookDetail>, ClientError> {
         match self
             .frodo_request::<FrodoBookResponse>(&format!("/book/{douban_id}"), &[])
             .await
@@ -620,10 +589,7 @@ impl DoubanClient {
         Ok(resp.text().await?)
     }
 
-    async fn scraping_search_books(
-        &self,
-        query: &str,
-    ) -> Result<Vec<DoubanSearchItem>, ClientError> {
+    async fn scraping_search_books(&self, query: &str) -> Result<Vec<DoubanSearchItem>, ClientError> {
         let suggest_url = format!(
             "{DOUBAN_BOOK_WEB_BASE}/j/subject_suggest?q={}",
             urlencoding::encode(query)
@@ -661,13 +627,8 @@ impl DoubanClient {
             .collect())
     }
 
-    async fn scraping_get_book_detail(
-        &self,
-        douban_id: &str,
-    ) -> Result<Option<DoubanBookDetail>, ClientError> {
-        let html = self
-            .book_web_request(&format!("/subject/{douban_id}/"))
-            .await?;
+    async fn scraping_get_book_detail(&self, douban_id: &str) -> Result<Option<DoubanBookDetail>, ClientError> {
+        let html = self.book_web_request(&format!("/subject/{douban_id}/")).await?;
         Ok(parse_book_detail_html(&html, douban_id))
     }
 }
@@ -749,8 +710,7 @@ fn parse_detail_html(html: &str, douban_id: &str) -> Option<DoubanDetail> {
 
     // Overview
     let re_full = Regex::new(r#"<span\s+class="all\s+hidden">\s*([\s\S]*?)\s*</span>"#).unwrap();
-    let re_short =
-        Regex::new(r#"<span\s+property="v:summary"[^>]*>\s*([\s\S]*?)\s*</span>"#).unwrap();
+    let re_short = Regex::new(r#"<span\s+property="v:summary"[^>]*>\s*([\s\S]*?)\s*</span>"#).unwrap();
     let plot_match = re_full.captures(html).or_else(|| re_short.captures(html));
     if let Some(caps) = plot_match {
         let raw = caps[1].to_string();
@@ -827,11 +787,7 @@ fn parse_detail_html(html: &str, douban_id: &str) -> Option<DoubanDetail> {
         detail.original_title = Some(decode_html_entities(caps[1].trim()));
     }
 
-    if detail.title.is_empty() {
-        None
-    } else {
-        Some(detail)
-    }
+    if detail.title.is_empty() { None } else { Some(detail) }
 }
 
 fn decode_html_entities(s: &str) -> String {
@@ -862,10 +818,7 @@ fn parse_frodo_book_detail(data: &FrodoBookResponse) -> Option<DoubanBookDetail>
         author: data.author.as_ref().map(|a| a.join(", ")),
         translator: data.translator.as_ref().map(|t| t.join(", ")),
         publisher: data.publisher.clone(),
-        year: data
-            .pub_date
-            .as_ref()
-            .and_then(|dates| dates.first().cloned()),
+        year: data.pub_date.as_ref().and_then(|dates| dates.first().cloned()),
         isbn: data.isbn.clone(),
         pages: data.pages.as_ref().and_then(|p| p.parse().ok()),
         overview: data.intro.clone(),
@@ -939,8 +892,7 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
         }
 
         // Translator
-        let translator_re =
-            Regex::new(r#"译者.*?</span>([\s\S]*?)(?:<br|<span class="pl")"#).unwrap();
+        let translator_re = Regex::new(r#"译者.*?</span>([\s\S]*?)(?:<br|<span class="pl")"#).unwrap();
         if let Some(caps) = translator_re.captures(info) {
             let link_re = Regex::new(r"<a[^>]*>(.*?)</a>").unwrap();
             let translators: Vec<String> = link_re
@@ -1021,10 +973,8 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
     let re_full = Regex::new(r#"<span\s+class="all\s+hidden">\s*([\s\S]*?)\s*</span>"#).unwrap();
     let re_short_div = Regex::new(r#"<div\s+class="intro">\s*([\s\S]*?)\s*</div>"#).unwrap();
     let re_short_span = Regex::new(r#"<span\s+class="intro">\s*([\s\S]*?)\s*</span>"#).unwrap();
-    let intro_section = Regex::new(
-        r#"内容简介[\s\S]*?(<(?:span|div)\s+class="(?:all hidden|intro)"[\s\S]*?</(?:span|div)>)"#,
-    )
-    .unwrap();
+    let intro_section =
+        Regex::new(r#"内容简介[\s\S]*?(<(?:span|div)\s+class="(?:all hidden|intro)"[\s\S]*?</(?:span|div)>)"#).unwrap();
     if let Some(section) = intro_section.captures(html) {
         let section_html = &section[1];
         let plot_match = re_full
@@ -1043,8 +993,7 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
     }
 
     // Rating — value may have surrounding whitespace like "> 7.0 <"
-    let re = Regex::new(r#"<strong[^>]*class="[^"]*rating_num[^"]*"[^>]*>\s*([\d.]+)\s*</strong>"#)
-        .unwrap();
+    let re = Regex::new(r#"<strong[^>]*class="[^"]*rating_num[^"]*"[^>]*>\s*([\d.]+)\s*</strong>"#).unwrap();
     if let Some(caps) = re.captures(html) {
         detail.rating = caps[1].parse().ok();
     }
@@ -1056,17 +1005,11 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
     }
 
     // Cover image — prefer large (/l/) over small (/s/)
-    let re_large =
-        Regex::new(r#"<img[^>]*src="(https://img\d\.doubanio\.com/view/subject/l/[^"]+)"#).unwrap();
-    let re_any =
-        Regex::new(r#"<img[^>]*src="(https://img\d\.doubanio\.com/view/subject/[^"]+)"#).unwrap();
+    let re_large = Regex::new(r#"<img[^>]*src="(https://img\d\.doubanio\.com/view/subject/l/[^"]+)"#).unwrap();
+    let re_any = Regex::new(r#"<img[^>]*src="(https://img\d\.doubanio\.com/view/subject/[^"]+)"#).unwrap();
     if let Some(caps) = re_large.captures(html).or_else(|| re_any.captures(html)) {
         detail.cover_url = Some(caps[1].to_string());
     }
 
-    if detail.title.is_empty() {
-        None
-    } else {
-        Some(detail)
-    }
+    if detail.title.is_empty() { None } else { Some(detail) }
 }

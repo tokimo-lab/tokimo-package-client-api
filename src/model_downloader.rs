@@ -49,8 +49,7 @@ impl ModelDownloader {
         }
 
         while let Some(chunk) = stream.next().await {
-            let chunk =
-                chunk.map_err(|e| ClientError::Other(format!("Download stream error: {e}")))?;
+            let chunk = chunk.map_err(|e| ClientError::Other(format!("Download stream error: {e}")))?;
             downloaded += chunk.len() as u64;
             buf.extend_from_slice(&chunk);
 
@@ -111,8 +110,7 @@ impl ModelDownloader {
         }
 
         while let Some(chunk) = stream.next().await {
-            let chunk =
-                chunk.map_err(|e| ClientError::Other(format!("Download stream error: {e}")))?;
+            let chunk = chunk.map_err(|e| ClientError::Other(format!("Download stream error: {e}")))?;
             downloaded += chunk.len() as u64;
             buf.extend_from_slice(&chunk);
 
@@ -139,8 +137,8 @@ impl ModelDownloader {
         let cursor = std::io::Cursor::new(buf);
         let dest_dir_owned = dest_dir.to_string();
         tokio::task::spawn_blocking(move || -> Result<(), ClientError> {
-            let mut archive = zip::ZipArchive::new(cursor)
-                .map_err(|e| ClientError::Other(format!("ZIP open failed: {e}")))?;
+            let mut archive =
+                zip::ZipArchive::new(cursor).map_err(|e| ClientError::Other(format!("ZIP open failed: {e}")))?;
 
             for i in 0..archive.len() {
                 let mut file = archive
@@ -155,8 +153,7 @@ impl ModelDownloader {
                 }
                 let out_path = format!("{dest_dir_owned}/{name}");
                 if let Some(parent) = Path::new(&out_path).parent() {
-                    std::fs::create_dir_all(parent)
-                        .map_err(|e| ClientError::Other(format!("mkdir failed: {e}")))?;
+                    std::fs::create_dir_all(parent).map_err(|e| ClientError::Other(format!("mkdir failed: {e}")))?;
                 }
                 let mut out_file = std::fs::File::create(&out_path)
                     .map_err(|e| ClientError::Other(format!("File create failed: {e}")))?;

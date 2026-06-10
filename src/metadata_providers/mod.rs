@@ -39,19 +39,11 @@ pub trait MusicMetadataProvider: Send + Sync {
     fn source(&self) -> MetadataSource;
 
     /// Search for albums by artist and album name.
-    async fn search_albums(
-        &self,
-        artist: &str,
-        album: &str,
-        limit: u32,
-    ) -> Result<Vec<AlbumSearchResult>, ClientError>;
+    async fn search_albums(&self, artist: &str, album: &str, limit: u32)
+    -> Result<Vec<AlbumSearchResult>, ClientError>;
 
     /// Search for albums by keyword only.
-    async fn search_albums_by_keyword(
-        &self,
-        keyword: &str,
-        limit: u32,
-    ) -> Result<Vec<AlbumSearchResult>, ClientError>;
+    async fn search_albums_by_keyword(&self, keyword: &str, limit: u32) -> Result<Vec<AlbumSearchResult>, ClientError>;
 
     /// Get full album details by external ID.
     async fn get_album_detail(&self, external_id: &str) -> Result<AlbumDetail, ClientError>;
