@@ -477,7 +477,7 @@ impl DoubanClient {
             ))
             .await
         {
-            let re = Regex::new(r"subject/(\d+)/").unwrap();
+            let re = Regex::new(r"subject/(\d+)/").expect("valid regex");
             if let Some(caps) = re.captures(&html) {
                 return self.scraping_get_detail(&caps[1]).await;
             }
@@ -697,48 +697,48 @@ fn parse_detail_html(html: &str, douban_id: &str) -> Option<DoubanDetail> {
     };
 
     // Title
-    let re = Regex::new(r#"<span\s+property="v:itemreviewed">(.*?)</span>"#).unwrap();
+    let re = Regex::new(r#"<span\s+property="v:itemreviewed">(.*?)</span>"#).expect("valid regex");
     if let Some(caps) = re.captures(html) {
         detail.title = decode_html_entities(&caps[1]);
     }
 
     // Year
-    let re = Regex::new(r#"<span\s+class="year">\((\d{4})\)</span>"#).unwrap();
+    let re = Regex::new(r#"<span\s+class="year">\((\d{4})\)</span>"#).expect("valid regex");
     if let Some(caps) = re.captures(html) {
         detail.year = Some(caps[1].to_string());
     }
 
     // Overview
-    let re_full = Regex::new(r#"<span\s+class="all\s+hidden">\s*([\s\S]*?)\s*</span>"#).unwrap();
-    let re_short = Regex::new(r#"<span\s+property="v:summary"[^>]*>\s*([\s\S]*?)\s*</span>"#).unwrap();
+    let re_full = Regex::new(r#"<span\s+class="all\s+hidden">\s*([\s\S]*?)\s*</span>"#).expect("valid regex");
+    let re_short = Regex::new(r#"<span\s+property="v:summary"[^>]*>\s*([\s\S]*?)\s*</span>"#).expect("valid regex");
     let plot_match = re_full.captures(html).or_else(|| re_short.captures(html));
     if let Some(caps) = plot_match {
         let raw = caps[1].to_string();
-        let cleaned = Regex::new(r"<br\s*/?>").unwrap().replace_all(&raw, "\n");
-        let cleaned = Regex::new(r"<[^>]+>").unwrap().replace_all(&cleaned, "");
+        let cleaned = Regex::new(r"<br\s*/?>").expect("valid regex").replace_all(&raw, "\n");
+        let cleaned = Regex::new(r"<[^>]+>").expect("valid regex").replace_all(&cleaned, "");
         detail.overview = Some(decode_html_entities(cleaned.trim()));
     }
 
     // Rating
-    let re = Regex::new(r#"<strong[^>]*class="ll\s+rating_num"[^>]*>([\d.]+)</strong>"#).unwrap();
+    let re = Regex::new(r#"<strong[^>]*class="ll\s+rating_num"[^>]*>([\d.]+)</strong>"#).expect("valid regex");
     if let Some(caps) = re.captures(html) {
         detail.rating = caps[1].parse().ok();
     }
 
     // Rating count
-    let re = Regex::new(r#"<span\s+property="v:votes">(\d+)</span>"#).unwrap();
+    let re = Regex::new(r#"<span\s+property="v:votes">(\d+)</span>"#).expect("valid regex");
     if let Some(caps) = re.captures(html) {
         detail.rating_count = caps[1].parse().ok();
     }
 
     // IMDb ID
-    let re = Regex::new(r"IMDb:.*?(tt\d+)").unwrap();
+    let re = Regex::new(r"IMDb:.*?(tt\d+)").expect("valid regex");
     if let Some(caps) = re.captures(html) {
         detail.imdb_id = Some(caps[1].to_string());
     }
 
     // Directors
-    let re = Regex::new(r#"<a[^>]*rel="v:directedBy"[^>]*>(.*?)</a>"#).unwrap();
+    let re = Regex::new(r#"<a[^>]*rel="v:directedBy"[^>]*>(.*?)</a>"#).expect("valid regex");
     let directors: Vec<String> = re
         .captures_iter(html)
         .map(|caps| decode_html_entities(&caps[1]))
@@ -748,7 +748,7 @@ fn parse_detail_html(html: &str, douban_id: &str) -> Option<DoubanDetail> {
     }
 
     // Actors
-    let re = Regex::new(r#"<a[^>]*rel="v:starring"[^>]*>(.*?)</a>"#).unwrap();
+    let re = Regex::new(r#"<a[^>]*rel="v:starring"[^>]*>(.*?)</a>"#).expect("valid regex");
     let actors: Vec<DoubanActor> = re
         .captures_iter(html)
         .map(|caps| DoubanActor {
@@ -761,7 +761,7 @@ fn parse_detail_html(html: &str, douban_id: &str) -> Option<DoubanDetail> {
     }
 
     // Genres
-    let re = Regex::new(r#"<span\s+property="v:genre">(.*?)</span>"#).unwrap();
+    let re = Regex::new(r#"<span\s+property="v:genre">(.*?)</span>"#).expect("valid regex");
     let genres: Vec<String> = re
         .captures_iter(html)
         .map(|caps| decode_html_entities(&caps[1]))
@@ -776,13 +776,13 @@ fn parse_detail_html(html: &str, douban_id: &str) -> Option<DoubanDetail> {
     }
 
     // Episode count
-    let re = Regex::new(r"集数:</span>\s*(\d+)").unwrap();
+    let re = Regex::new(r"集数:</span>\s*(\d+)").expect("valid regex");
     if let Some(caps) = re.captures(html) {
         detail.episode_count = caps[1].parse().ok();
     }
 
     // Original title
-    let re = Regex::new(r"原名:</span>\s*(.*?)<br").unwrap();
+    let re = Regex::new(r"原名:</span>\s*(.*?)<br").expect("valid regex");
     if let Some(caps) = re.captures(html) {
         detail.original_title = Some(decode_html_entities(caps[1].trim()));
     }
@@ -859,13 +859,13 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
     };
 
     // Title
-    let re = Regex::new(r#"<span\s+property="v:itemreviewed">(.*?)</span>"#).unwrap();
+    let re = Regex::new(r#"<span\s+property="v:itemreviewed">(.*?)</span>"#).expect("valid regex");
     if let Some(caps) = re.captures(html) {
         detail.title = decode_html_entities(&caps[1]);
     }
     // Fallback title from <title> tag
     if detail.title.is_empty() {
-        let re = Regex::new(r"<title>\s*(.*?)\s*\(豆瓣\)").unwrap();
+        let re = Regex::new(r"<title>\s*(.*?)\s*\(豆瓣\)").expect("valid regex");
         if let Some(caps) = re.captures(html) {
             detail.title = decode_html_entities(caps[1].trim());
         }
@@ -873,14 +873,14 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
 
     // The #info div contains structured metadata as spans
     // Extract the #info section
-    let info_re = Regex::new(r#"<div[^>]*id="info"[^>]*>([\s\S]*?)</div>"#).unwrap();
+    let info_re = Regex::new(r#"<div[^>]*id="info"[^>]*>([\s\S]*?)</div>"#).expect("valid regex");
     if let Some(info_caps) = info_re.captures(html) {
         let info = &info_caps[1];
 
         // Author — links inside the author section
-        let author_re = Regex::new(r#"作者.*?</span>([\s\S]*?)(?:<br|<span class="pl")"#).unwrap();
+        let author_re = Regex::new(r#"作者.*?</span>([\s\S]*?)(?:<br|<span class="pl")"#).expect("valid regex");
         if let Some(caps) = author_re.captures(info) {
-            let link_re = Regex::new(r"<a[^>]*>(.*?)</a>").unwrap();
+            let link_re = Regex::new(r"<a[^>]*>(.*?)</a>").expect("valid regex");
             let authors: Vec<String> = link_re
                 .captures_iter(&caps[1])
                 .map(|c| decode_html_entities(c[1].trim()))
@@ -892,9 +892,9 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
         }
 
         // Translator
-        let translator_re = Regex::new(r#"译者.*?</span>([\s\S]*?)(?:<br|<span class="pl")"#).unwrap();
+        let translator_re = Regex::new(r#"译者.*?</span>([\s\S]*?)(?:<br|<span class="pl")"#).expect("valid regex");
         if let Some(caps) = translator_re.captures(info) {
-            let link_re = Regex::new(r"<a[^>]*>(.*?)</a>").unwrap();
+            let link_re = Regex::new(r"<a[^>]*>(.*?)</a>").expect("valid regex");
             let translators: Vec<String> = link_re
                 .captures_iter(&caps[1])
                 .map(|c| decode_html_entities(c[1].trim()))
@@ -906,9 +906,9 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
         }
 
         // Publisher
-        let publisher_re = Regex::new(r"出版社:</span>\s*(.*?)(?:<br|</|<span)").unwrap();
+        let publisher_re = Regex::new(r"出版社:</span>\s*(.*?)(?:<br|</|<span)").expect("valid regex");
         if let Some(caps) = publisher_re.captures(info) {
-            let text = Regex::new(r"<[^>]+>").unwrap().replace_all(&caps[1], "");
+            let text = Regex::new(r"<[^>]+>").expect("valid regex").replace_all(&caps[1], "");
             let p = decode_html_entities(text.trim());
             if !p.is_empty() {
                 detail.publisher = Some(p);
@@ -916,9 +916,9 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
         }
 
         // Publish date
-        let year_re = Regex::new(r"出版年:</span>\s*(.*?)(?:<br|</|<span)").unwrap();
+        let year_re = Regex::new(r"出版年:</span>\s*(.*?)(?:<br|</|<span)").expect("valid regex");
         if let Some(caps) = year_re.captures(info) {
-            let text = Regex::new(r"<[^>]+>").unwrap().replace_all(&caps[1], "");
+            let text = Regex::new(r"<[^>]+>").expect("valid regex").replace_all(&caps[1], "");
             let y = decode_html_entities(text.trim());
             if !y.is_empty() {
                 detail.year = Some(y);
@@ -926,21 +926,21 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
         }
 
         // ISBN
-        let isbn_re = Regex::new(r"ISBN:</span>\s*([\d\-Xx]+)").unwrap();
+        let isbn_re = Regex::new(r"ISBN:</span>\s*([\d\-Xx]+)").expect("valid regex");
         if let Some(caps) = isbn_re.captures(info) {
             detail.isbn = Some(caps[1].replace('-', "").trim().to_string());
         }
 
         // Pages
-        let pages_re = Regex::new(r"页数:</span>\s*(\d+)").unwrap();
+        let pages_re = Regex::new(r"页数:</span>\s*(\d+)").expect("valid regex");
         if let Some(caps) = pages_re.captures(info) {
             detail.pages = caps[1].parse().ok();
         }
 
         // Original title
-        let orig_re = Regex::new(r"原作名:</span>\s*(.*?)(?:<br|</|<span)").unwrap();
+        let orig_re = Regex::new(r"原作名:</span>\s*(.*?)(?:<br|</|<span)").expect("valid regex");
         if let Some(caps) = orig_re.captures(info) {
-            let text = Regex::new(r"<[^>]+>").unwrap().replace_all(&caps[1], "");
+            let text = Regex::new(r"<[^>]+>").expect("valid regex").replace_all(&caps[1], "");
             let t = decode_html_entities(text.trim());
             if !t.is_empty() {
                 detail.original_title = Some(t);
@@ -948,9 +948,9 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
         }
 
         // Binding
-        let binding_re = Regex::new(r"装帧:</span>\s*(.*?)(?:<br|</|<span)").unwrap();
+        let binding_re = Regex::new(r"装帧:</span>\s*(.*?)(?:<br|</|<span)").expect("valid regex");
         if let Some(caps) = binding_re.captures(info) {
-            let text = Regex::new(r"<[^>]+>").unwrap().replace_all(&caps[1], "");
+            let text = Regex::new(r"<[^>]+>").expect("valid regex").replace_all(&caps[1], "");
             let b = decode_html_entities(text.trim());
             if !b.is_empty() {
                 detail.binding = Some(b);
@@ -958,9 +958,9 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
         }
 
         // Price
-        let price_re = Regex::new(r"定价:</span>\s*(.*?)(?:<br|</|<span)").unwrap();
+        let price_re = Regex::new(r"定价:</span>\s*(.*?)(?:<br|</|<span)").expect("valid regex");
         if let Some(caps) = price_re.captures(info) {
-            let text = Regex::new(r"<[^>]+>").unwrap().replace_all(&caps[1], "");
+            let text = Regex::new(r"<[^>]+>").expect("valid regex").replace_all(&caps[1], "");
             let p = decode_html_entities(text.trim());
             if !p.is_empty() {
                 detail.price = Some(p);
@@ -970,11 +970,11 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
 
     // Overview / summary
     // Douban uses <span class="all hidden"> (full text) or <div class="intro"> / <span class="intro">
-    let re_full = Regex::new(r#"<span\s+class="all\s+hidden">\s*([\s\S]*?)\s*</span>"#).unwrap();
-    let re_short_div = Regex::new(r#"<div\s+class="intro">\s*([\s\S]*?)\s*</div>"#).unwrap();
-    let re_short_span = Regex::new(r#"<span\s+class="intro">\s*([\s\S]*?)\s*</span>"#).unwrap();
+    let re_full = Regex::new(r#"<span\s+class="all\s+hidden">\s*([\s\S]*?)\s*</span>"#).expect("valid regex");
+    let re_short_div = Regex::new(r#"<div\s+class="intro">\s*([\s\S]*?)\s*</div>"#).expect("valid regex");
+    let re_short_span = Regex::new(r#"<span\s+class="intro">\s*([\s\S]*?)\s*</span>"#).expect("valid regex");
     let intro_section =
-        Regex::new(r#"内容简介[\s\S]*?(<(?:span|div)\s+class="(?:all hidden|intro)"[\s\S]*?</(?:span|div)>)"#).unwrap();
+        Regex::new(r#"内容简介[\s\S]*?(<(?:span|div)\s+class="(?:all hidden|intro)"[\s\S]*?</(?:span|div)>)"#).expect("valid regex");
     if let Some(section) = intro_section.captures(html) {
         let section_html = &section[1];
         let plot_match = re_full
@@ -983,8 +983,8 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
             .or_else(|| re_short_span.captures(section_html));
         if let Some(caps) = plot_match {
             let raw = caps[1].to_string();
-            let cleaned = Regex::new(r"<br\s*/?>").unwrap().replace_all(&raw, "\n");
-            let cleaned = Regex::new(r"<[^>]+>").unwrap().replace_all(&cleaned, "");
+            let cleaned = Regex::new(r"<br\s*/?>").expect("valid regex").replace_all(&raw, "\n");
+            let cleaned = Regex::new(r"<[^>]+>").expect("valid regex").replace_all(&cleaned, "");
             let text = decode_html_entities(cleaned.trim());
             if !text.is_empty() {
                 detail.overview = Some(text);
@@ -993,20 +993,20 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
     }
 
     // Rating — value may have surrounding whitespace like "> 7.0 <"
-    let re = Regex::new(r#"<strong[^>]*class="[^"]*rating_num[^"]*"[^>]*>\s*([\d.]+)\s*</strong>"#).unwrap();
+    let re = Regex::new(r#"<strong[^>]*class="[^"]*rating_num[^"]*"[^>]*>\s*([\d.]+)\s*</strong>"#).expect("valid regex");
     if let Some(caps) = re.captures(html) {
         detail.rating = caps[1].parse().ok();
     }
 
     // Rating count
-    let re = Regex::new(r#"<span\s+property="v:votes">(\d+)</span>"#).unwrap();
+    let re = Regex::new(r#"<span\s+property="v:votes">(\d+)</span>"#).expect("valid regex");
     if let Some(caps) = re.captures(html) {
         detail.rating_count = caps[1].parse().ok();
     }
 
     // Cover image — prefer large (/l/) over small (/s/)
-    let re_large = Regex::new(r#"<img[^>]*src="(https://img\d\.doubanio\.com/view/subject/l/[^"]+)"#).unwrap();
-    let re_any = Regex::new(r#"<img[^>]*src="(https://img\d\.doubanio\.com/view/subject/[^"]+)"#).unwrap();
+    let re_large = Regex::new(r#"<img[^>]*src="(https://img\d\.doubanio\.com/view/subject/l/[^"]+)"#).expect("valid regex");
+    let re_any = Regex::new(r#"<img[^>]*src="(https://img\d\.doubanio\.com/view/subject/[^"]+)"#).expect("valid regex");
     if let Some(caps) = re_large.captures(html).or_else(|| re_any.captures(html)) {
         detail.cover_url = Some(caps[1].to_string());
     }

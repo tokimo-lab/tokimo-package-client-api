@@ -43,7 +43,7 @@ impl MusicBrainzClient {
         let mut last = rate_limiter().lock().await;
         let elapsed = last.elapsed();
         if elapsed < MIN_INTERVAL {
-            tokio::time::sleep(MIN_INTERVAL.checked_sub(elapsed).unwrap()).await;
+            tokio::time::sleep(MIN_INTERVAL.checked_sub(elapsed).expect("elapsed < MIN_INTERVAL verified above")).await;
         }
         *last = std::time::Instant::now();
     }

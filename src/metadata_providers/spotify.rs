@@ -80,7 +80,7 @@ impl SpotifyClient {
         {
             let guard = self.token.read().await;
             if let Some(ref state) = *guard
-                && std::time::Instant::now() < state.expires_at.checked_sub(Duration::from_mins(1)).unwrap()
+                && state.expires_at.checked_sub(Duration::from_mins(1)).is_some_and(|deadline| std::time::Instant::now() < deadline)
             {
                 return Ok(state.access_token.clone());
             }

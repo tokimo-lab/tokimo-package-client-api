@@ -179,10 +179,10 @@ impl BangumiClient {
 
     fn build_headers(&self) -> reqwest::header::HeaderMap {
         let mut headers = reqwest::header::HeaderMap::new();
-        headers.insert("User-Agent", self.user_agent.parse().unwrap());
-        headers.insert("Content-Type", "application/json".parse().unwrap());
+        headers.insert("User-Agent", self.user_agent.parse().expect("valid header value"));
+        headers.insert("Content-Type", "application/json".parse().expect("valid header value"));
         if let Some(ref token) = self.access_token {
-            headers.insert("Authorization", format!("Bearer {token}").parse().unwrap());
+            headers.insert("Authorization", format!("Bearer {token}").parse().expect("valid header value"));
         }
         headers
     }

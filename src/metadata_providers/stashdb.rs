@@ -138,10 +138,10 @@ impl StashDBClient {
         }
 
         let mut headers = reqwest::header::HeaderMap::new();
-        headers.insert("Content-Type", "application/json".parse().unwrap());
-        headers.insert("Accept", "application/json".parse().unwrap());
+        headers.insert("Content-Type", "application/json".parse().expect("valid header value"));
+        headers.insert("Accept", "application/json".parse().expect("valid header value"));
         if let Some(ref key) = self.api_key {
-            headers.insert("ApiKey", key.parse().unwrap());
+            headers.insert("ApiKey", key.parse().expect("valid header value"));
         }
 
         let resp = self

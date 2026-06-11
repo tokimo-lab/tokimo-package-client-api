@@ -167,8 +167,8 @@ fn extract_detail_path(html: &str, video_id: &str) -> Option<String> {
     let document = scraper::Html::parse_document(html);
     let normalized = video_id.to_uppercase();
 
-    let link_sel = scraper::Selector::parse(".movie-list .item a, .grid-item a").unwrap();
-    let uid_sel = scraper::Selector::parse(".uid, .video-title strong").unwrap();
+    let link_sel = scraper::Selector::parse(".movie-list .item a, .grid-item a").expect("valid CSS selector");
+    let uid_sel = scraper::Selector::parse(".uid, .video-title strong").expect("valid CSS selector");
 
     // Exact match
     for el in document.select(&link_sel) {
@@ -195,8 +195,8 @@ fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &st
     let document = scraper::Html::parse_document(html);
 
     // Title
-    let title_sel1 = scraper::Selector::parse("h2.title strong.current-title").unwrap();
-    let title_sel2 = scraper::Selector::parse("h2.title").unwrap();
+    let title_sel1 = scraper::Selector::parse("h2.title strong.current-title").expect("valid CSS selector");
+    let title_sel2 = scraper::Selector::parse("h2.title").expect("valid CSS selector");
     let title = document
         .select(&title_sel1)
         .next()
@@ -208,7 +208,7 @@ fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &st
     }
 
     // Poster
-    let poster_sel = scraper::Selector::parse(".video-cover img, .column-video-cover img").unwrap();
+    let poster_sel = scraper::Selector::parse(".video-cover img, .column-video-cover img").expect("valid CSS selector");
     let poster_url = document
         .select(&poster_sel)
         .next()
@@ -216,17 +216,17 @@ fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &st
         .map(|u| resolve_url(u, base_url));
 
     // Rating
-    let rating_sel = scraper::Selector::parse(".score .value").unwrap();
+    let rating_sel = scraper::Selector::parse(".score .value").expect("valid CSS selector");
     let rating = document
         .select(&rating_sel)
         .next()
         .and_then(|el| el.text().collect::<String>().trim().parse::<f64>().ok());
 
     // Metadata panels
-    let panel_sel = scraper::Selector::parse(".movie-panel-info .panel-block, .video-meta-panel .panel-block").unwrap();
-    let strong_sel = scraper::Selector::parse("strong, .header").unwrap();
-    let value_sel = scraper::Selector::parse(".value, span:not(.header)").unwrap();
-    let a_sel = scraper::Selector::parse("a").unwrap();
+    let panel_sel = scraper::Selector::parse(".movie-panel-info .panel-block, .video-meta-panel .panel-block").expect("valid CSS selector");
+    let strong_sel = scraper::Selector::parse("strong, .header").expect("valid CSS selector");
+    let value_sel = scraper::Selector::parse(".value, span:not(.header)").expect("valid CSS selector");
+    let a_sel = scraper::Selector::parse("a").expect("valid CSS selector");
 
     let mut actors: Vec<String> = Vec::new();
     let mut genres: Vec<String> = Vec::new();
@@ -234,8 +234,8 @@ fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &st
     let mut studio = None;
     let mut duration = None;
 
-    let date_re = regex::Regex::new(r"\d{4}-\d{2}-\d{2}").unwrap();
-    let num_re = regex::Regex::new(r"(\d+)").unwrap();
+    let date_re = regex::Regex::new(r"\d{4}-\d{2}-\d{2}").expect("valid regex");
+    let num_re = regex::Regex::new(r"(\d+)").expect("valid regex");
     for el in document.select(&panel_sel) {
         let label = el
             .select(&strong_sel)
@@ -298,15 +298,15 @@ fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &st
 
 fn parse_search_page_list(html: &str, prefix: &str, base_url: &str) -> Vec<AdultSeriesVideo> {
     let document = scraper::Html::parse_document(html);
-    let item_sel = scraper::Selector::parse(".movie-list .item, .grid-item").unwrap();
-    let uid_sel = scraper::Selector::parse(".uid, .video-title strong").unwrap();
-    let strong_sel = scraper::Selector::parse("strong").unwrap();
-    let img_sel = scraper::Selector::parse("img").unwrap();
-    let meta_sel = scraper::Selector::parse(".meta, .has-text-grey-dark").unwrap();
-    let a_sel = scraper::Selector::parse("a").unwrap();
+    let item_sel = scraper::Selector::parse(".movie-list .item, .grid-item").expect("valid CSS selector");
+    let uid_sel = scraper::Selector::parse(".uid, .video-title strong").expect("valid CSS selector");
+    let strong_sel = scraper::Selector::parse("strong").expect("valid CSS selector");
+    let img_sel = scraper::Selector::parse("img").expect("valid CSS selector");
+    let meta_sel = scraper::Selector::parse(".meta, .has-text-grey-dark").expect("valid CSS selector");
+    let a_sel = scraper::Selector::parse("a").expect("valid CSS selector");
 
     let mut videos = Vec::new();
-    let date_re = regex::Regex::new(r"\d{4}-\d{2}-\d{2}").unwrap();
+    let date_re = regex::Regex::new(r"\d{4}-\d{2}-\d{2}").expect("valid regex");
 
     for el in document.select(&item_sel) {
         let link = if el.value().name() == "a" {
@@ -335,7 +335,7 @@ fn parse_search_page_list(html: &str, prefix: &str, base_url: &str) -> Vec<Adult
             .map(|u| resolve_url(u, base_url));
 
         let title = link
-            .select(&scraper::Selector::parse(".video-title").unwrap())
+            .select(&scraper::Selector::parse(".video-title").expect("valid CSS selector"))
             .next()
             .map(|t| t.text().collect::<String>().trim().to_string());
 
@@ -359,7 +359,7 @@ fn parse_search_page_list(html: &str, prefix: &str, base_url: &str) -> Vec<Adult
 
 fn has_next_page_link(html: &str) -> bool {
     let document = scraper::Html::parse_document(html);
-    let sel = scraper::Selector::parse(".pagination-next:not([disabled]), .pagination a.is-current + a").unwrap();
+    let sel = scraper::Selector::parse(".pagination-next:not([disabled]), .pagination a.is-current + a").expect("valid CSS selector");
     document.select(&sel).next().is_some()
 }
 
@@ -374,7 +374,7 @@ fn resolve_url(url: &str, base_url: &str) -> String {
 }
 
 fn extract_trailing_number(s: &str) -> i64 {
-    let re = regex::Regex::new(r"(\d+)$").unwrap();
+    let re = regex::Regex::new(r"(\d+)$").expect("valid regex");
     re.captures(s)
         .and_then(|c| c.get(1))
         .and_then(|m| m.as_str().parse().ok())

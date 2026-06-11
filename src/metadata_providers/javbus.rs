@@ -177,9 +177,9 @@ impl JavBusClient {
 
         let document = scraper::Html::parse_document(&result.body);
         let upper = video_id.to_uppercase();
-        let item_sel = scraper::Selector::parse("#waterfall .item, .movie-box, a.movie-box").unwrap();
-        let date_sel = scraper::Selector::parse("date").unwrap();
-        let img_sel = scraper::Selector::parse("img").unwrap();
+        let item_sel = scraper::Selector::parse("#waterfall .item, .movie-box, a.movie-box").expect("valid CSS selector");
+        let date_sel = scraper::Selector::parse("date").expect("valid CSS selector");
+        let img_sel = scraper::Selector::parse("img").expect("valid CSS selector");
 
         for el in document.select(&item_sel) {
             let vid = el
@@ -208,7 +208,7 @@ fn check_cloudflare(body: &str) -> Result<(), ClientError> {
 fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &str) -> Option<AdultMetadata> {
     let document = scraper::Html::parse_document(html);
 
-    let h3_sel = scraper::Selector::parse("h3").unwrap();
+    let h3_sel = scraper::Selector::parse("h3").expect("valid CSS selector");
     let title = document
         .select(&h3_sel)
         .next()
@@ -219,8 +219,8 @@ fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &st
     }
 
     // Cover image
-    let big_image_sel = scraper::Selector::parse("a.bigImage").unwrap();
-    let big_img_sel = scraper::Selector::parse("a.bigImage img").unwrap();
+    let big_image_sel = scraper::Selector::parse("a.bigImage").expect("valid CSS selector");
+    let big_img_sel = scraper::Selector::parse("a.bigImage img").expect("valid CSS selector");
     let raw_cover = document
         .select(&big_image_sel)
         .next()
@@ -237,7 +237,7 @@ fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &st
         .map(|u| u.replace("/pics/cover/", "/pics/thumb/").replace("_b.jpg", ".jpg"));
 
     // Actors
-    let actor_sel = scraper::Selector::parse(".star-name a").unwrap();
+    let actor_sel = scraper::Selector::parse(".star-name a").expect("valid CSS selector");
     let actors: Vec<String> = document
         .select(&actor_sel)
         .map(|el| el.text().collect::<String>().trim().to_string())
@@ -245,7 +245,7 @@ fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &st
         .collect();
 
     // Genres
-    let genre_sel = scraper::Selector::parse(r#"span.genre a[href*="genre"]"#).unwrap();
+    let genre_sel = scraper::Selector::parse(r#"span.genre a[href*="genre"]"#).expect("valid CSS selector");
     let genres: Vec<String> = document
         .select(&genre_sel)
         .map(|el| el.text().collect::<String>().trim().to_string())
@@ -253,13 +253,13 @@ fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &st
         .collect();
 
     // Info fields
-    let info_sel = scraper::Selector::parse(".info p").unwrap();
+    let info_sel = scraper::Selector::parse(".info p").expect("valid CSS selector");
     let mut release_date = None;
     let mut studio = None;
     let mut duration = None;
-    let a_sel = scraper::Selector::parse("a").unwrap();
-    let date_re = regex::Regex::new(r"\d{4}-\d{2}-\d{2}").unwrap();
-    let num_re = regex::Regex::new(r"(\d+)").unwrap();
+    let a_sel = scraper::Selector::parse("a").expect("valid CSS selector");
+    let date_re = regex::Regex::new(r"\d{4}-\d{2}-\d{2}").expect("valid regex");
+    let num_re = regex::Regex::new(r"(\d+)").expect("valid regex");
 
     for el in document.select(&info_sel) {
         let text = el.text().collect::<String>();
@@ -301,12 +301,12 @@ fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &st
 
 fn parse_search_page(html: &str, prefix: &str, base_url: &str) -> Vec<AdultSeriesVideo> {
     let document = scraper::Html::parse_document(html);
-    let item_sel = scraper::Selector::parse("#waterfall .item, .movie-box, a.movie-box").unwrap();
-    let date_sel = scraper::Selector::parse("date").unwrap();
-    let img_sel = scraper::Selector::parse("img").unwrap();
+    let item_sel = scraper::Selector::parse("#waterfall .item, .movie-box, a.movie-box").expect("valid CSS selector");
+    let date_sel = scraper::Selector::parse("date").expect("valid CSS selector");
+    let img_sel = scraper::Selector::parse("img").expect("valid CSS selector");
 
     let mut videos = Vec::new();
-    let date_val_re = regex::Regex::new(r"\d{4}-\d{2}-\d{2}").unwrap();
+    let date_val_re = regex::Regex::new(r"\d{4}-\d{2}-\d{2}").expect("valid regex");
 
     for el in document.select(&item_sel) {
         let dates: Vec<_> = el.select(&date_sel).collect();
@@ -344,7 +344,7 @@ fn parse_search_page(html: &str, prefix: &str, base_url: &str) -> Vec<AdultSerie
 
 fn has_next_page(html: &str) -> bool {
     let document = scraper::Html::parse_document(html);
-    let sel = scraper::Selector::parse("a#next, .pagination a[id='next']").unwrap();
+    let sel = scraper::Selector::parse("a#next, .pagination a[id='next']").expect("valid CSS selector");
     document.select(&sel).next().is_some()
 }
 
@@ -359,7 +359,7 @@ fn resolve_url(url: &str, base_url: &str) -> String {
 }
 
 fn extract_trailing_number(s: &str) -> i64 {
-    let re = regex::Regex::new(r"(\d+)$").unwrap();
+    let re = regex::Regex::new(r"(\d+)$").expect("valid regex");
     re.captures(s)
         .and_then(|c| c.get(1))
         .and_then(|m| m.as_str().parse().ok())
