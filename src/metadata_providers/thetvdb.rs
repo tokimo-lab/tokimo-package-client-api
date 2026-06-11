@@ -140,7 +140,10 @@ impl ThetvdbClient {
         {
             let guard = self.token.read().await;
             if let Some(ref state) = *guard
-                && state.expires_at.checked_sub(TOKEN_REFRESH_BUFFER).is_some_and(|deadline| std::time::Instant::now() < deadline)
+                && state
+                    .expires_at
+                    .checked_sub(TOKEN_REFRESH_BUFFER)
+                    .is_some_and(|deadline| std::time::Instant::now() < deadline)
             {
                 return Ok(state.token.clone());
             }

@@ -177,7 +177,8 @@ impl JavBusClient {
 
         let document = scraper::Html::parse_document(&result.body);
         let upper = video_id.to_uppercase();
-        let item_sel = scraper::Selector::parse("#waterfall .item, .movie-box, a.movie-box").expect("valid CSS selector");
+        let item_sel =
+            scraper::Selector::parse("#waterfall .item, .movie-box, a.movie-box").expect("valid CSS selector");
         let date_sel = scraper::Selector::parse("date").expect("valid CSS selector");
         let img_sel = scraper::Selector::parse("img").expect("valid CSS selector");
 

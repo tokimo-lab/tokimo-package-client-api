@@ -223,7 +223,8 @@ fn parse_detail_page(html: &str, video_id: &str, source_url: &str, base_url: &st
         .and_then(|el| el.text().collect::<String>().trim().parse::<f64>().ok());
 
     // Metadata panels
-    let panel_sel = scraper::Selector::parse(".movie-panel-info .panel-block, .video-meta-panel .panel-block").expect("valid CSS selector");
+    let panel_sel = scraper::Selector::parse(".movie-panel-info .panel-block, .video-meta-panel .panel-block")
+        .expect("valid CSS selector");
     let strong_sel = scraper::Selector::parse("strong, .header").expect("valid CSS selector");
     let value_sel = scraper::Selector::parse(".value, span:not(.header)").expect("valid CSS selector");
     let a_sel = scraper::Selector::parse("a").expect("valid CSS selector");
@@ -359,7 +360,8 @@ fn parse_search_page_list(html: &str, prefix: &str, base_url: &str) -> Vec<Adult
 
 fn has_next_page_link(html: &str) -> bool {
     let document = scraper::Html::parse_document(html);
-    let sel = scraper::Selector::parse(".pagination-next:not([disabled]), .pagination a.is-current + a").expect("valid CSS selector");
+    let sel = scraper::Selector::parse(".pagination-next:not([disabled]), .pagination a.is-current + a")
+        .expect("valid CSS selector");
     document.select(&sel).next().is_some()
 }
 

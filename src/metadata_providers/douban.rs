@@ -974,7 +974,8 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
     let re_short_div = Regex::new(r#"<div\s+class="intro">\s*([\s\S]*?)\s*</div>"#).expect("valid regex");
     let re_short_span = Regex::new(r#"<span\s+class="intro">\s*([\s\S]*?)\s*</span>"#).expect("valid regex");
     let intro_section =
-        Regex::new(r#"内容简介[\s\S]*?(<(?:span|div)\s+class="(?:all hidden|intro)"[\s\S]*?</(?:span|div)>)"#).expect("valid regex");
+        Regex::new(r#"内容简介[\s\S]*?(<(?:span|div)\s+class="(?:all hidden|intro)"[\s\S]*?</(?:span|div)>)"#)
+            .expect("valid regex");
     if let Some(section) = intro_section.captures(html) {
         let section_html = &section[1];
         let plot_match = re_full
@@ -993,7 +994,8 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
     }
 
     // Rating — value may have surrounding whitespace like "> 7.0 <"
-    let re = Regex::new(r#"<strong[^>]*class="[^"]*rating_num[^"]*"[^>]*>\s*([\d.]+)\s*</strong>"#).expect("valid regex");
+    let re =
+        Regex::new(r#"<strong[^>]*class="[^"]*rating_num[^"]*"[^>]*>\s*([\d.]+)\s*</strong>"#).expect("valid regex");
     if let Some(caps) = re.captures(html) {
         detail.rating = caps[1].parse().ok();
     }
@@ -1005,7 +1007,8 @@ fn parse_book_detail_html(html: &str, douban_id: &str) -> Option<DoubanBookDetai
     }
 
     // Cover image — prefer large (/l/) over small (/s/)
-    let re_large = Regex::new(r#"<img[^>]*src="(https://img\d\.doubanio\.com/view/subject/l/[^"]+)"#).expect("valid regex");
+    let re_large =
+        Regex::new(r#"<img[^>]*src="(https://img\d\.doubanio\.com/view/subject/l/[^"]+)"#).expect("valid regex");
     let re_any = Regex::new(r#"<img[^>]*src="(https://img\d\.doubanio\.com/view/subject/[^"]+)"#).expect("valid regex");
     if let Some(caps) = re_large.captures(html).or_else(|| re_any.captures(html)) {
         detail.cover_url = Some(caps[1].to_string());
