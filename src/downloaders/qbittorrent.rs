@@ -233,14 +233,47 @@ impl DownloadClient for QBittorrentClient {
     async fn add_torrent(&self, options: AddTorrentOptions) -> Result<(), ClientError> {
         self.ensure_logged_in().await?;
         let url = format!("{}/api/v2/torrents/add", self.config.url);
+
+        // Use multipart form when torrent files are present (qBittorrent requires file upload)
+        if let Some(torrents) = &options.torrents {
+            if !torrents.is_empty() {
+                let mut multipart = reqwest::multipart::Form::new();
+                if let Some(urls) = &options.urls {
+                    multipart = multipart.text("urls", urls.join("\n"));
+                }
+                for (i, t) in torrents.iter().enumerate() {
+                    let decoded = base64::Engine::decode(&base64::engine::general_purpose::STANDARD_NO_PAD, t)
+                        .map_err(|e| ClientError::Api(format!("Invalid base64 torrent #{i}: {e}")))?;
+                    let part = reqwest::multipart::Part::bytes(decoded)
+                        .file_name(format!("{i}.torrent"))
+                        .mime_str("application/x-bittorrent")
+                        .map_err(|e| ClientError::Api(format!("Mime error: {e}")))?;
+                    multipart = multipart.part("torrents", part);
+                }
+                if let Some(path) = &options.save_path {
+                    multipart = multipart.text("savepath", path.clone());
+                }
+                if let Some(cat) = &options.category {
+                    multipart = multipart.text("category", cat.clone());
+                }
+                if let Some(tags) = &options.tags {
+                    multipart = multipart.text("tags", tags.join(","));
+                }
+                if let Some(paused) = options.paused {
+                    multipart = multipart.text("paused", paused.to_string());
+                }
+                if let Some(skip) = options.skip_hash_check {
+                    multipart = multipart.text("skip_checking", skip.to_string());
+                }
+                self.client.post(&url).multipart(multipart).send().await?;
+                return Ok(());
+            }
+        }
+
+        // Fallback: URL-encoded form (for URLs/magnets only)
         let mut form: Vec<(String, String)> = Vec::new();
         if let Some(urls) = &options.urls {
             form.push(("urls".to_string(), urls.join("\n")));
-        }
-        if let Some(torrents) = &options.torrents {
-            for t in torrents {
-                form.push(("torrents".to_string(), t.clone()));
-            }
         }
         if let Some(path) = &options.save_path {
             form.push(("savepath".to_string(), path.clone()));
