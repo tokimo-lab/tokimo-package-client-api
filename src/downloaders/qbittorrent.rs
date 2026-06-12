@@ -242,12 +242,11 @@ impl DownloadClient for QBittorrentClient {
                     multipart = multipart.text("urls", urls.join("\n"));
                 }
                 for (i, t) in torrents.iter().enumerate() {
-                    let decoded = base64::Engine::decode(&base64::engine::general_purpose::STANDARD_NO_PAD, t)
-                        .map_err(|e| ClientError::Api(format!("Invalid base64 torrent #{i}: {e}")))?;
+                    use base64::Engine;
+                    let decoded = base64::engine::general_purpose::STANDARD_NO_PAD.decode(t)
+                        .map_err(|e| ClientError::Other(format!("Invalid base64 torrent #{i}: {e}")))?;
                     let part = reqwest::multipart::Part::bytes(decoded)
-                        .file_name(format!("{i}.torrent"))
-                        .mime_str("application/x-bittorrent")
-                        .map_err(|e| ClientError::Api(format!("Mime error: {e}")))?;
+                        .file_name("file.torrent");
                     multipart = multipart.part("torrents", part);
                 }
                 if let Some(path) = &options.save_path {
@@ -265,7 +264,12 @@ impl DownloadClient for QBittorrentClient {
                 if let Some(skip) = options.skip_hash_check {
                     multipart = multipart.text("skip_checking", skip.to_string());
                 }
-                self.client.post(&url).multipart(multipart).send().await?;
+                let resp = self.client.post(&url).multipart(multipart).send().await?;
+                if !resp.status().is_success() {
+                    let status = resp.status().as_u16();
+                    let body = resp.text().await.unwrap_or_default();
+                    return Err(ClientError::Api { status, message: body });
+                }
                 return Ok(());
             }
         }
