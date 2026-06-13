@@ -243,10 +243,10 @@ impl DownloadClient for QBittorrentClient {
                 }
                 for (i, t) in torrents.iter().enumerate() {
                     use base64::Engine;
-                    let decoded = base64::engine::general_purpose::STANDARD_NO_PAD.decode(t)
+                    let decoded = base64::engine::general_purpose::STANDARD_NO_PAD
+                        .decode(t)
                         .map_err(|e| ClientError::Other(format!("Invalid base64 torrent #{i}: {e}")))?;
-                    let part = reqwest::multipart::Part::bytes(decoded)
-                        .file_name("file.torrent");
+                    let part = reqwest::multipart::Part::bytes(decoded).file_name("file.torrent");
                     multipart = multipart.part("torrents", part);
                 }
                 if let Some(path) = &options.save_path {
