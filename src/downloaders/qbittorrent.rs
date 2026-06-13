@@ -235,43 +235,43 @@ impl DownloadClient for QBittorrentClient {
         let url = format!("{}/api/v2/torrents/add", self.config.url);
 
         // Use multipart form when torrent files are present (qBittorrent requires file upload)
-        if let Some(torrents) = &options.torrents {
-            if !torrents.is_empty() {
-                let mut multipart = reqwest::multipart::Form::new();
-                if let Some(urls) = &options.urls {
-                    multipart = multipart.text("urls", urls.join("\n"));
-                }
-                for (i, t) in torrents.iter().enumerate() {
-                    use base64::Engine;
-                    let decoded = base64::engine::general_purpose::STANDARD_NO_PAD
-                        .decode(t)
-                        .map_err(|e| ClientError::Other(format!("Invalid base64 torrent #{i}: {e}")))?;
-                    let part = reqwest::multipart::Part::bytes(decoded).file_name("file.torrent");
-                    multipart = multipart.part("torrents", part);
-                }
-                if let Some(path) = &options.save_path {
-                    multipart = multipart.text("savepath", path.clone());
-                }
-                if let Some(cat) = &options.category {
-                    multipart = multipart.text("category", cat.clone());
-                }
-                if let Some(tags) = &options.tags {
-                    multipart = multipart.text("tags", tags.join(","));
-                }
-                if let Some(paused) = options.paused {
-                    multipart = multipart.text("paused", paused.to_string());
-                }
-                if let Some(skip) = options.skip_hash_check {
-                    multipart = multipart.text("skip_checking", skip.to_string());
-                }
-                let resp = self.client.post(&url).multipart(multipart).send().await?;
-                if !resp.status().is_success() {
-                    let status = resp.status().as_u16();
-                    let body = resp.text().await.unwrap_or_default();
-                    return Err(ClientError::Api { status, message: body });
-                }
-                return Ok(());
+        if let Some(torrents) = &options.torrents
+            && !torrents.is_empty()
+        {
+            let mut multipart = reqwest::multipart::Form::new();
+            if let Some(urls) = &options.urls {
+                multipart = multipart.text("urls", urls.join("\n"));
             }
+            for (i, t) in torrents.iter().enumerate() {
+                use base64::Engine;
+                let decoded = base64::engine::general_purpose::STANDARD_NO_PAD
+                    .decode(t)
+                    .map_err(|e| ClientError::Other(format!("Invalid base64 torrent #{i}: {e}")))?;
+                let part = reqwest::multipart::Part::bytes(decoded).file_name("file.torrent");
+                multipart = multipart.part("torrents", part);
+            }
+            if let Some(path) = &options.save_path {
+                multipart = multipart.text("savepath", path.clone());
+            }
+            if let Some(cat) = &options.category {
+                multipart = multipart.text("category", cat.clone());
+            }
+            if let Some(tags) = &options.tags {
+                multipart = multipart.text("tags", tags.join(","));
+            }
+            if let Some(paused) = options.paused {
+                multipart = multipart.text("paused", paused.to_string());
+            }
+            if let Some(skip) = options.skip_hash_check {
+                multipart = multipart.text("skip_checking", skip.to_string());
+            }
+            let resp = self.client.post(&url).multipart(multipart).send().await?;
+            if !resp.status().is_success() {
+                let status = resp.status().as_u16();
+                let body = resp.text().await.unwrap_or_default();
+                return Err(ClientError::Api { status, message: body });
+            }
+            return Ok(());
         }
 
         // Fallback: URL-encoded form (for URLs/magnets only)
