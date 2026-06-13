@@ -155,7 +155,7 @@ struct QbtMaindata {
 struct QbtServerState {
     dl_info_speed: u64,
     up_info_speed: u64,
-    free_space_on_disk: u64,
+    free_space_on_disk: i64,
 }
 
 impl DownloadClient for QBittorrentClient {
@@ -387,7 +387,7 @@ impl DownloadClient for QBittorrentClient {
         Ok(TransferInfo {
             dl_speed: data.server_state.dl_info_speed,
             up_speed: data.server_state.up_info_speed,
-            free_space: data.server_state.free_space_on_disk,
+            free_space: data.server_state.free_space_on_disk.max(0) as u64,
         })
     }
 
